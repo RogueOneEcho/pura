@@ -1,0 +1,6 @@
+/.idea
+/target
+config.yml
+**/*.rs.bk
+*.pdb
+.envrc
