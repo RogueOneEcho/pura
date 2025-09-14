@@ -1,7 +1,4 @@
-use rogue_config::{ConfigError, OptionsProvider, YamlOptionsProvider};
-use serde::{Deserialize, Serialize};
-use std::fmt::Display;
-use std::path::PathBuf;
+use crate::prelude::*;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub(crate) struct ScrapeOptions {
@@ -57,8 +54,7 @@ pub enum ValidationError {
 }
 
 impl Display for ValidationError {
-    #[allow(clippy::absolute_paths)]
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         match self {
             ValidationError::Required(field) => {
                 write!(f, "Required field `{field}` is empty")

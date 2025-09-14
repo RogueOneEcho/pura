@@ -1,7 +1,6 @@
-use crate::scrape::*;
-use colored::Colorize;
-use rogue_config::ConfigError;
-use std::fmt::{Display, Formatter};
+use crate::prelude::*;
+use super::client::*;
+use super::options::*;
 
 pub struct ScrapeCommand;
 
@@ -9,10 +8,10 @@ impl ScrapeCommand {
     pub fn execute(self) -> Result<(), ScrapeError> {
         let options = ScrapeOptions::get()?;
         options.validate()?;
-        let html_provider = HtmlProvider {
+        let client = Client {
             cache_dir: options.cache_dir,
         };
-        let _html = html_provider.get(&options.url)?;
+        let _html = client.get(&options.url)?;
         Ok(())
     }
 }
@@ -21,7 +20,7 @@ impl ScrapeCommand {
 pub enum ScrapeError {
     Config(ConfigError),
     Validation(Vec<ValidationError>),
-    HtmlProvider(HtmlProviderError),
+    HtmlProvider(ClientError),
 }
 
 impl From<ConfigError> for ScrapeError {
@@ -30,8 +29,8 @@ impl From<ConfigError> for ScrapeError {
     }
 }
 
-impl From<HtmlProviderError> for ScrapeError {
-    fn from(err: HtmlProviderError) -> Self {
+impl From<ClientError> for ScrapeError {
+    fn from(err: ClientError) -> Self {
         ScrapeError::HtmlProvider(err)
     }
 }
@@ -43,8 +42,7 @@ impl From<Vec<ValidationError>> for ScrapeError {
 }
 
 impl Display for ScrapeError {
-    #[allow(clippy::absolute_paths)]
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         let reason = match self {
             ScrapeError::Config(err) => format!("Unable to read config: {err}"),
             ScrapeError::HtmlProvider(err) => format!("Unable to fetch HTML: {err:?}"),
@@ -61,7 +59,6 @@ impl Display for ScrapeError {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::init_logging;
 
     #[test]
     pub fn scrape_command() -> Result<(), ScrapeError> {

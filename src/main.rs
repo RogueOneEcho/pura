@@ -1,5 +1,5 @@
-use log::{error, info};
-use pura::*;
+use pura::prelude::*;
+
 
 fn main() {
     let _ = init_logging();

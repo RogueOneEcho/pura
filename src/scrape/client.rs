@@ -1,16 +1,13 @@
-use log::error;
-use reqwest::blocking::Client;
+use crate::prelude::*;
+use reqwest::blocking::Client as ReqwestClient;
 use sha2::{Digest, Sha256};
-use std::fs::File;
-use std::io::{Read, Write};
-use std::path::PathBuf;
 
-pub(crate) struct HtmlProvider {
+pub(crate) struct Client {
     pub cache_dir: PathBuf,
 }
 
-impl HtmlProvider {
-    pub fn get(&self, url: &str) -> Result<String, HtmlProviderError> {
+impl Client {
+    pub fn get(&self, url: &str) -> Result<String, ClientError> {
         match self.get_from_cache(url) {
             Ok(Some(content)) => {
                 return Ok(content);
@@ -23,7 +20,7 @@ impl HtmlProvider {
         self.fetch_and_cache(url)
     }
 
-    fn get_from_cache(&self, url: &str) -> Result<Option<String>, HtmlProviderError> {
+    fn get_from_cache(&self, url: &str) -> Result<Option<String>, ClientError> {
         let cache_path = self.get_cache_path(url);
         if !cache_path.exists() {
             return Ok(None);
@@ -34,19 +31,18 @@ impl HtmlProvider {
         Ok(Some(contents))
     }
 
-    #[allow(clippy::absolute_paths)]
-    fn fetch_and_cache(&self, url: &str) -> Result<String, HtmlProviderError> {
-        let client = Client::new();
+    fn fetch_and_cache(&self, url: &str) -> Result<String, ClientError> {
+        let client = ReqwestClient::new();
         let response = client.get(url).send()?;
         if !response.status().is_success() {
-            return Err(HtmlProviderError::Status(response.status().as_u16()));
+            return Err(ClientError::Status(response.status().as_u16()));
         }
         let content = response.text()?;
         self.cache_content(url, &content)?;
         Ok(content)
     }
 
-    fn cache_content(&self, url: &str, content: &str) -> Result<(), HtmlProviderError> {
+    fn cache_content(&self, url: &str, content: &str) -> Result<(), ClientError> {
         let cache_path = self.get_cache_path(url);
         let mut file = File::create(cache_path)?;
         file.write_all(content.as_bytes())?;
@@ -63,7 +59,7 @@ impl HtmlProvider {
 
 #[allow(clippy::absolute_paths)]
 #[derive(Debug)]
-pub enum HtmlProviderError {
+pub enum ClientError {
     Status(u16),
     Network(reqwest::Error),
     Io(std::io::Error),
@@ -71,15 +67,15 @@ pub enum HtmlProviderError {
 }
 
 #[allow(clippy::absolute_paths)]
-impl From<reqwest::Error> for HtmlProviderError {
+impl From<reqwest::Error> for ClientError {
     fn from(err: reqwest::Error) -> Self {
-        HtmlProviderError::Network(err)
+        ClientError::Network(err)
     }
 }
 
 #[allow(clippy::absolute_paths)]
-impl From<std::io::Error> for HtmlProviderError {
+impl From<std::io::Error> for ClientError {
     fn from(err: std::io::Error) -> Self {
-        HtmlProviderError::Io(err)
+        ClientError::Io(err)
     }
 }
