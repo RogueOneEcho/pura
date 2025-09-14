@@ -1,5 +1,6 @@
 use crate::prelude::*;
 use reqwest::blocking::Client as ReqwestClient;
+use reqwest::StatusCode;
 use sha2::{Digest, Sha256};
 
 pub(crate) struct Client {
@@ -14,7 +15,7 @@ impl Client {
             }
             Ok(None) => {}
             Err(e) => {
-                error!("Error fetching from cache: {e:?}");
+                error!("Error fetching from cache: {e}");
             }
         }
         self.fetch_and_cache(url)
@@ -77,5 +78,24 @@ impl From<reqwest::Error> for ClientError {
 impl From<std::io::Error> for ClientError {
     fn from(err: std::io::Error) -> Self {
         ClientError::Io(err)
+    }
+}
+
+impl Display for ClientError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        let message = match self {
+            ClientError::Status(number) => StatusCode::from_u16(*number)
+                .and_then(|code| {
+                    Ok(format!(
+                        "{number} {}",
+                        code.canonical_reason().unwrap_or_default()
+                    ))
+                })
+                .unwrap_or_else(|_| format!("{number}")),
+            ClientError::Network(e) => format!("{e}"),
+            ClientError::Io(e) => format!("{e}"),
+            ClientError::InvalidUrl(e) => format!("{e}"),
+        };
+        write!(f, "{message}")
     }
 }

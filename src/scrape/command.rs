@@ -20,7 +20,7 @@ impl ScrapeCommand {
 pub enum ScrapeError {
     Config(ConfigError),
     Validation(Vec<ValidationError>),
-    HtmlProvider(ClientError),
+    Client(ClientError),
 }
 
 impl From<ConfigError> for ScrapeError {
@@ -31,7 +31,7 @@ impl From<ConfigError> for ScrapeError {
 
 impl From<ClientError> for ScrapeError {
     fn from(err: ClientError) -> Self {
-        ScrapeError::HtmlProvider(err)
+        ScrapeError::Client(err)
     }
 }
 
@@ -44,8 +44,8 @@ impl From<Vec<ValidationError>> for ScrapeError {
 impl Display for ScrapeError {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         let reason = match self {
-            ScrapeError::Config(err) => format!("Unable to read config: {err}"),
-            ScrapeError::HtmlProvider(err) => format!("Unable to fetch HTML: {err:?}"),
+            ScrapeError::Config(e) => format!("Unable to read config: {e}"),
+            ScrapeError::Client(e) => format!("Unable to fetch HTML: {e}"),
             ScrapeError::Validation(errors) => errors.iter().fold(String::new(), |mut acc, err| {
                 acc.push('\n');
                 acc.push_str(&err.to_string());
