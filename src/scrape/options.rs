@@ -8,9 +8,11 @@ pub(crate) struct ScrapeOptions {
 }
 
 impl ScrapeOptions {
+    pub(crate) const DEFAULT_CACHE_DIR: &'static str = "cache/client";
+
     pub(crate) fn set_defaults(&mut self) {
         if self.cache_dir == PathBuf::new() {
-            self.cache_dir = "cache/html".into();
+            self.cache_dir = Self::DEFAULT_CACHE_DIR.into();
         }
     }
 

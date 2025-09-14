@@ -18,7 +18,7 @@ impl ScrapeCommand {
     }
 
     pub fn execute(self) -> Result<(), ScrapeError> {
-        let _html = self.client.get(&self.options.url)?;
+        let _html = self.client.get_html(&self.options.url)?;
         Ok(())
     }
 }

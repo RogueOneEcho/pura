@@ -7,6 +7,7 @@ pub fn init_logging() -> Arc<Logger> {
     LoggerBuilder::new()
         .with_exclude_filter("reqwest".to_owned())
         .with_exclude_filter("cookie".to_owned())
+        .with_exclude_filter("html5ever".to_owned())
         .with_verbosity(Trace)
         .create()
 }

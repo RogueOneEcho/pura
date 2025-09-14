@@ -21,6 +21,7 @@ log = "0.4.28"
 reqwest = { version = "0.12.23", features = ["blocking"] }
 rogue_config = "0.2.0"
 rogue_logging = "0.3.0"
+scraper = "0.24.0"
 serde = { version = "1.0.217", features = ["derive"] }
 sha2 = "0.10.9"
 

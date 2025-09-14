@@ -1,3 +1,3 @@
 mod app;
-mod scrape;
 pub mod prelude;
+mod scrape;

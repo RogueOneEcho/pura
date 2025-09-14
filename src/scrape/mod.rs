@@ -1,3 +1,3 @@
-pub mod command;
 mod client;
+pub mod command;
 mod options;
