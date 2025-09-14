@@ -3,7 +3,7 @@ use crate::prelude::*;
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub(crate) struct ScrapeOptions {
     pub name: String,
-    pub url: String,
+    pub url: Url,
     pub cache_dir: PathBuf,
 }
 
@@ -18,9 +18,6 @@ impl ScrapeOptions {
         let mut errors = vec![];
         if self.name.is_empty() {
             errors.push(ValidationError::Required("name".to_owned()));
-        }
-        if self.url.is_empty() {
-            errors.push(ValidationError::Required("url".to_owned()));
         }
         if self.cache_dir == PathBuf::new() {
             errors.push(ValidationError::Required("cache_dir".to_owned()));
