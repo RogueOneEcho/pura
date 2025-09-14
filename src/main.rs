@@ -1,12 +1,9 @@
 use pura::prelude::*;
 
-
 fn main() {
     let _ = init_logging();
-    let command = ScrapeCommand;
-
-    // Act
-    match command.execute() {
+    let result = ScrapeCommand::new().and_then(|command| command.execute());
+    match result {
         Ok(()) => {
             info!("Success");
         }

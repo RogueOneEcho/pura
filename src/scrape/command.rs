@@ -1,17 +1,24 @@
-use crate::prelude::*;
 use super::client::*;
 use super::options::*;
+use crate::prelude::*;
 
-pub struct ScrapeCommand;
+pub struct ScrapeCommand {
+    options: ScrapeOptions,
+    client: Client,
+}
 
 impl ScrapeCommand {
-    pub fn execute(self) -> Result<(), ScrapeError> {
+    pub fn new() -> Result<Self, ScrapeError> {
         let options = ScrapeOptions::get()?;
         options.validate()?;
         let client = Client {
-            cache_dir: options.cache_dir,
+            cache_dir: options.cache_dir.clone(),
         };
-        let _html = client.get(&options.url)?;
+        Ok(Self { options, client })
+    }
+
+    pub fn execute(self) -> Result<(), ScrapeError> {
+        let _html = self.client.get(&self.options.url)?;
         Ok(())
     }
 }
@@ -64,7 +71,7 @@ mod tests {
     pub fn scrape_command() -> Result<(), ScrapeError> {
         // Arrange
         let _ = init_logging();
-        let command = ScrapeCommand;
+        let command = ScrapeCommand::new()?;
 
         // Act
         command.execute()?;
