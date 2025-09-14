@@ -1,0 +1,12 @@
+/.git
+/.github
+/.idea
+.editorconfig
+config.json
+config.*.json
+config.yaml
+config.*.yaml
+config.yml
+config.*.yml
+Dockerfile
+*.md

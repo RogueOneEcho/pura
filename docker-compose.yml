@@ -1,0 +1,8 @@
+services:
+  coda:
+    container_name: coda
+    build: .
+    ports:
+    - "0.0.0.0:2632:2632"
+    volumes:
+    - /srv/coda/config.yml:/config.yml:ro
