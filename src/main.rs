@@ -1,15 +1,17 @@
+use log::{error, info};
 use pura::*;
 
-#[tokio::main]
-async fn main() {
+fn main() {
     let _ = init_logging();
     let command = ScrapeCommand;
 
     // Act
-    match command.execute().await {
-        Ok(()) => {}
+    match command.execute() {
+        Ok(()) => {
+            info!("Success");
+        }
         Err(e) => {
-            eprintln!("{e}");
+            error!("{e}");
         }
     }
 }
