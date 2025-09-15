@@ -19,47 +19,33 @@ impl ScrapeCommand {
 
     pub fn execute(self) -> Result<(), ScrapeError> {
         let html = self.client.get_html(&self.options.url)?;
-        let iframe_src = parse_iframe_src(&html)?;
-        let player_html = self.client.get_html(&iframe_src)?;
-        let audio_src = parse_audio_src(&player_html)?;
-        let file = self.client.get(&audio_src)?;
-        let podcast = Podcast {
-            title: String::new(),
-            description: String::new(),
-            date: String::new(),
-            episode_type: String::new(),
-            author: String::new(),
-            subtitle: String::new(),
-            summary: String::new(),
-            duration: 0,
-            guid: String::new(),
-            file,
-        };
-        info!("{podcast}");
+        let guid = get_simplecast_episode_guid(&html)?;
+        let url = Url::parse(&format!("https://api.simplecast.com/episodes/{guid}"))
+            .expect("URL should be valid");
+        let episode: Episode = self.client.get_json(&url)?;
+        trace!("\n{episode}");
         Ok(())
     }
 }
 
-fn parse_iframe_src(html: &Html) -> Result<Url, ScrapeError> {
-    let src = get_element_attr(html, "div.audio-player iframe", "src")?;
-    parse_url(&src)
+fn get_simplecast_episode_guid(html: &Html) -> Result<String, ScrapeError> {
+    get_element_attr(html, "div.audio-player iframe", "src")
+        .into_iter()
+        .find_map(|url| {
+            let host = url.host_str()?;
+            if host != "player.simplecast.com" {
+                return None;
+            }
+            let guid = url.path_segments()?.next()?.to_owned();
+            Some(guid)
+        })
+        .ok_or_else(|| ScrapeError::SimplecastNotFound)
 }
 
-fn parse_audio_src(html: &Html) -> Result<Url, ScrapeError> {
-    let src = get_element_attr(html, "audio", "src")?;
-    parse_url(&src)
-}
-
-fn get_element_attr(html: &Html, selector: &str, attr: &str) -> Result<String, ScrapeError> {
-    let s = Selector::parse(selector).expect("Selector should be valid");
-    let element = html
-        .select(&s)
-        .nth(0)
-        .ok_or_else(|| ScrapeError::ElementNotFound(selector.to_owned()))?;
-    element
-        .attr(attr)
-        .map(str::to_owned)
-        .ok_or_else(|| ScrapeError::AttributeNotFound(selector.to_owned(), attr.to_owned()))
+fn get_element_attr(html: &Html, selector: &str, attr: &str) -> Vec<Url> {
+    html.select(&Selector::parse(selector).expect("Selector should be valid"))
+        .filter_map(|element| element.attr(attr).and_then(|url| parse_url(url).ok()))
+        .collect()
 }
 
 fn parse_url(src: &str) -> Result<Url, ScrapeError> {
@@ -77,6 +63,7 @@ pub enum ScrapeError {
     ElementNotFound(String),
     AttributeNotFound(String, String),
     InvalidUrl(String),
+    SimplecastNotFound,
 }
 
 impl From<ConfigError> for ScrapeError {
@@ -112,6 +99,7 @@ impl Display for ScrapeError {
                 format!("Unable to find attribute `{attr}` on element: {element}")
             }
             ScrapeError::InvalidUrl(url) => format!("Invalid Url: {url}"),
+            ScrapeError::SimplecastNotFound => "Simplecast not found".to_owned(),
         };
         write!(f, "{} to scrape\n{reason}", "Failed".bold())
     }

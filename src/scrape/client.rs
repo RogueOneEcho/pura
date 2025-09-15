@@ -1,7 +1,9 @@
 use crate::prelude::*;
 use reqwest::blocking::Client as ReqwestClient;
+use serde::de::DeserializeOwned;
 use sha2::{Digest, Sha256};
-use std::fs::{create_dir_all, read_to_string};
+
+const DEFAULT_EXTENSION: &str = "json";
 
 pub(crate) struct Client {
     pub cache_dir: PathBuf,
@@ -12,6 +14,13 @@ impl Client {
         let path = self.get(url)?;
         let contents = read_to_string(path)?;
         Ok(Html::parse_document(&contents))
+    }
+
+    pub fn get_json<T: DeserializeOwned>(&self, url: &Url) -> Result<T, ClientError> {
+        let path = self.get(url)?;
+        let file = File::open(path)?;
+        let reader = BufReader::new(file);
+        serde_json::from_reader(reader).map_err(ClientError::InvalidJson)
     }
 
     pub fn get(&self, url: &Url) -> Result<PathBuf, ClientError> {
@@ -33,7 +42,7 @@ impl Client {
         let extension = Path::new(url.path())
             .extension()
             .and_then(|ext| ext.to_str())
-            .unwrap_or("html");
+            .unwrap_or(DEFAULT_EXTENSION);
         self.cache_dir
             .join(domain)
             .join(hash)
@@ -69,6 +78,7 @@ pub enum ClientError {
     Network(reqwest::Error),
     Io(std::io::Error),
     InvalidUrl(String),
+    InvalidJson(serde_json::Error),
 }
 
 #[allow(clippy::absolute_paths)]
@@ -95,6 +105,7 @@ impl Display for ClientError {
             ClientError::Network(e) => format!("{e}"),
             ClientError::Io(e) => format!("{e}"),
             ClientError::InvalidUrl(e) => e.to_string(),
+            ClientError::InvalidJson(e) => e.to_string(),
         };
         write!(f, "{message}")
     }

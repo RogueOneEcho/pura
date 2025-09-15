@@ -1,6 +1,7 @@
 pub use crate::app::logging::*;
 pub use crate::scrape::command::*;
-pub use crate::scrape::podcast::*;
+pub use crate::scrape::simplecast_episode::*;
+pub(crate) use chrono::{DateTime, FixedOffset, NaiveDateTime};
 pub(crate) use colored::Colorize;
 pub use log::{debug, error, info, trace, warn};
 pub(crate) use reqwest::{StatusCode, Url};
@@ -9,6 +10,6 @@ pub(crate) use scraper::{Html, Selector};
 pub(crate) use serde::{Deserialize, Serialize};
 pub(crate) use std::fmt::Result as FmtResult;
 pub(crate) use std::fmt::{Display, Formatter};
-pub(crate) use std::fs::File;
-pub(crate) use std::io::Write;
+pub(crate) use std::fs::{create_dir_all, read_to_string, File};
+pub(crate) use std::io::{BufReader, Write};
 pub(crate) use std::path::{Path, PathBuf};
