@@ -1232,6 +1232,7 @@ dependencies = [
  "rogue_logging",
  "scraper",
  "serde",
+ "serde_yaml",
  "sha2",
 ]
 

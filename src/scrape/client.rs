@@ -9,12 +9,12 @@ pub(crate) struct Client {
 
 impl Client {
     pub fn get_html(&self, url: &Url) -> Result<Html, ClientError> {
-        let path = self.get_path(url)?;
+        let path = self.get(url)?;
         let contents = read_to_string(path)?;
         Ok(Html::parse_document(&contents))
     }
 
-    fn get_path(&self, url: &Url) -> Result<PathBuf, ClientError> {
+    pub fn get(&self, url: &Url) -> Result<PathBuf, ClientError> {
         let path = self.get_cache_path(url);
         if path.exists() {
             trace!("Cache HIT: {url}");
@@ -109,7 +109,7 @@ mod tests {
     const HTML_URL: &str = "https://httpbin.org/html";
 
     #[test]
-    pub fn get_path() -> Result<(), ScrapeError> {
+    pub fn get() -> Result<(), ScrapeError> {
         // Arrange
         let _ = init_logging();
         let client = Client {
@@ -122,7 +122,7 @@ mod tests {
         }
 
         // Act
-        let path = client.get_path(&url)?;
+        let path = client.get(&url)?;
 
         // Assert
         assert_eq!(path, expected);

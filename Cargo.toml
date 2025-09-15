@@ -23,6 +23,7 @@ rogue_config = "0.2.0"
 rogue_logging = "0.3.0"
 scraper = "0.24.0"
 serde = { version = "1.0.217", features = ["derive"] }
+serde_yaml = "0.9.34"
 sha2 = "0.10.9"
 
 [lints.clippy]

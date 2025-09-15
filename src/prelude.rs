@@ -1,10 +1,11 @@
 pub use crate::app::logging::*;
 pub use crate::scrape::command::*;
+pub use crate::scrape::podcast::*;
 pub(crate) use colored::Colorize;
 pub use log::{debug, error, info, trace, warn};
 pub(crate) use reqwest::{StatusCode, Url};
 pub(crate) use rogue_config::{ConfigError, OptionsProvider, YamlOptionsProvider};
-pub(crate) use scraper::Html;
+pub(crate) use scraper::{Html, Selector};
 pub(crate) use serde::{Deserialize, Serialize};
 pub(crate) use std::fmt::Result as FmtResult;
 pub(crate) use std::fmt::{Display, Formatter};
