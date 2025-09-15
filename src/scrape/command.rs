@@ -1,6 +1,7 @@
 use super::client::*;
 use super::options::*;
 use crate::prelude::*;
+use crate::scrape::simplecast_playlist::Playlist;
 
 pub struct ScrapeCommand {
     options: ScrapeOptions,
@@ -19,11 +20,28 @@ impl ScrapeCommand {
 
     pub fn execute(self) -> Result<(), ScrapeError> {
         let html = self.client.get_html(&self.options.url)?;
-        let guid = get_simplecast_episode_guid(&html)?;
-        let url = Url::parse(&format!("https://api.simplecast.com/episodes/{guid}"))
-            .expect("URL should be valid");
-        let episode: Episode = self.client.get_json(&url)?;
+        let episode_guid = get_simplecast_episode_guid(&html)?;
+        let episode_url = Url::parse(&format!(
+            "https://api.simplecast.com/episodes/{episode_guid}"
+        ))
+        .expect("URL should be valid");
+        let episode: Episode = self.client.get_json(&episode_url)?;
         trace!("\n{episode}");
+        let mut playlist_url = Url::parse(&format!(
+            "https://api.simplecast.com/podcasts/{}/playlist",
+            episode.podcast.id
+        ))
+        .expect("URL should be valid");
+        let mut episodes = Vec::new();
+        loop {
+            let mut playlist: Playlist = self.client.get_json(&playlist_url)?;
+            let next = playlist.episodes.pages.next.clone();
+            episodes.append(&mut playlist.episodes.collection);
+            let Some(link) = next else {
+                break;
+            };
+            playlist_url = link.href;
+        }
         Ok(())
     }
 }

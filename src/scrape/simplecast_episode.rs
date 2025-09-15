@@ -1,6 +1,6 @@
 use crate::prelude::*;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Episode {
     pub long_description: String,
     pub audio_status: String,
@@ -23,7 +23,7 @@ pub struct Episode {
     pub podcast: Podcast,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct AudioFile {
     pub url: String,
     pub size: u64,
@@ -33,7 +33,7 @@ pub struct AudioFile {
     pub href: Url,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Podcast {
     pub href: Url,
     pub title: String,
@@ -44,7 +44,7 @@ pub struct Podcast {
     pub created_at: NaiveDateTime,
     pub account_id: String,
 }
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Count {
     pub count: u32,
 }
