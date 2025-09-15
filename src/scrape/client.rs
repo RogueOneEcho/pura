@@ -44,6 +44,7 @@ impl Client {
             .and_then(|ext| ext.to_str())
             .unwrap_or(DEFAULT_EXTENSION);
         self.cache_dir
+            .join("client")
             .join(domain)
             .join(hash)
             .with_extension(extension)

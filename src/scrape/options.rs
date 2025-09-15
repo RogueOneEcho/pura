@@ -8,7 +8,7 @@ pub(crate) struct ScrapeOptions {
 }
 
 impl ScrapeOptions {
-    pub(crate) const DEFAULT_CACHE_DIR: &'static str = "cache/client";
+    pub(crate) const DEFAULT_CACHE_DIR: &'static str = "cache";
 
     pub(crate) fn set_defaults(&mut self) {
         if self.cache_dir == PathBuf::new() {
@@ -24,7 +24,7 @@ impl ScrapeOptions {
         if self.cache_dir == PathBuf::new() {
             errors.push(ValidationError::Required("cache_dir".to_owned()));
         } else {
-            let cache_dir = PathBuf::from(&self.cache_dir);
+            let cache_dir = PathBuf::from(&self.cache_dir).join("client");
             if !cache_dir.exists() {
                 errors.push(ValidationError::PathNotExist(
                     "cache_dir".to_owned(),
