@@ -21,12 +21,20 @@ impl ScrapeCommand {
     pub fn execute(self) -> Result<(), ScrapeError> {
         let html = self.client.get_html(&self.options.url)?;
         let episode_guid = get_simplecast_episode_guid(&html)?;
+        debug!(
+            "{} Simplecast player with episode id: {episode_guid}",
+            "Found".bold()
+        );
         let episode_url = Url::parse(&format!(
             "https://api.simplecast.com/episodes/{episode_guid}"
         ))
         .expect("URL should be valid");
         let episode: Episode = self.client.get_json(&episode_url)?;
-        trace!("\n{episode}");
+        debug!(
+            "{} playlist for {}",
+            "Fetching".bold(),
+            episode.podcast.title
+        );
         let mut playlist_url = Url::parse(&format!(
             "https://api.simplecast.com/podcasts/{}/playlist",
             episode.podcast.id
@@ -42,6 +50,12 @@ impl ScrapeCommand {
             };
             playlist_url = link.href;
         }
+        info!(
+            "{} {} episodes of {}",
+            "Found".bold(),
+            episodes.len(),
+            episode.podcast.title
+        );
         Ok(())
     }
 }

@@ -4,9 +4,7 @@ fn main() {
     let _ = init_logging();
     let result = ScrapeCommand::new().and_then(ScrapeCommand::execute);
     match result {
-        Ok(()) => {
-            info!("Success");
-        }
+        Ok(()) => {}
         Err(e) => {
             error!("{e}");
         }
