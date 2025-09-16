@@ -137,6 +137,7 @@ jobs:
 
     - if: matrix.test
       run: |
+        tee config.yml <<EOF
         name: PODCAST NAME
         url: ${{ secrets.TEST_URL }}
         cache_dir: ''
