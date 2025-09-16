@@ -136,6 +136,16 @@ jobs:
     - run: rm -rf artifacts
 
     - if: matrix.test
+      run: |
+        name: PODCAST NAME
+        url: ${{ secrets.TEST_URL }}
+        cache_dir: ''
+        EOF
+
+    - if: matrix.test
+      run: mkdir -p cache/client
+
+    - if: matrix.test
       run: cargo test --release --no-fail-fast --target ${{ matrix.target }}
 
     - name: Run cargo check
