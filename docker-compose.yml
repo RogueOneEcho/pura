@@ -11,6 +11,6 @@ services:
 configs:
   pura_config:
     content: |
-      name: Office Ladies
-      url: https://www.earwolf.com/episode/the-pilot/
+      name: ${PODCAST_NAME}
+      url: ${SCRAPE_URL}
       cache_dir: /srv/pura/cache

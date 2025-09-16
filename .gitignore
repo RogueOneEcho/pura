@@ -4,3 +4,4 @@ config.yml
 **/*.rs.bk
 *.pdb
 .envrc
+.env
