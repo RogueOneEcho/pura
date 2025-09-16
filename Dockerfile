@@ -3,7 +3,7 @@ FROM rust:alpine AS builder
 RUN apk add --no-cache cargo-edit libc-dev
 # Build just the dependencies with version 0.0.0 so they're cached
 WORKDIR /app
-COPY Cargo.toml Cargo.lock /app
+COPY Cargo.toml Cargo.lock /app/
 RUN mkdir -p src && echo 'fn main() {}' > /app/src/main.rs
 RUN cargo fetch
 RUN cargo build --release --locked
