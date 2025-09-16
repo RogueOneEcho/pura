@@ -1,6 +1,6 @@
 # Build binary
 FROM rust:alpine AS builder
-RUN apk add --no-cache cargo-edit libc-dev openssl-dev openssl-libs-static
+RUN apk add --no-cache cargo-edit libc-dev
 # Build just the dependencies with version 0.0.0 so they're cached
 WORKDIR /app
 COPY Cargo.toml Cargo.lock /app

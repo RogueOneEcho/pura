@@ -19,7 +19,7 @@ publish = true
 chrono = { version = "0.4.42", features = ["serde"] }
 colored = "3.0.0"
 log = "0.4.28"
-reqwest = { version = "0.12.23", features = ["blocking"] }
+reqwest = { version = "0.12.23", default-features = false, features = ["blocking", "json", "rustls-tls"] }
 rogue_config = "0.2.0"
 rogue_logging = "0.3.0"
 scraper = "0.24.0"
