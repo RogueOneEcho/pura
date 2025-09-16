@@ -98,7 +98,7 @@ jobs:
       run: sudo apt-get update
 
     - if: ${{ matrix.target == 'x86_64-unknown-linux-musl' }}
-      run: sudo apt-get install musl-tools libssl-dev pkg-config --yes
+      run: sudo apt-get install musl-dev musl-tools libssl-dev --yes
 
     - if: matrix.target == 'aarch64-unknown-linux-gnu'
       run: sudo apt-get install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu libc6-dev-arm64-cross --yes
