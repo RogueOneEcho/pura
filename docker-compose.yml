@@ -1,0 +1,39 @@
+services:
+
+  tunnel:
+    container_name: pura-tunnel
+    hostname: tunnel
+    image: ghcr.io/qdm12/gluetun
+    devices:
+    - /dev/net/tun:/dev/net/tun
+    env_file:
+    - .env
+    cap_add:
+    - NET_ADMIN
+    restart: unless-stopped
+
+  pura:
+    container_name: pura
+    build: .
+    volumes:
+    - /srv/shared/pura:/srv/shared/pura
+    environment:
+      CACHE_DIR: /srv/shared/pura/cache
+      OUTPUT_DIR: /srv/shared/pura/output
+      SERVER_BASE: ${SERVER_BASE}
+    network_mode: "service:tunnel"
+    depends_on:
+      tunnel:
+        condition: service_healthy
+
+  caddy:
+    container_name: pura-caddy
+    image: caddy:2-alpine
+    ports:
+    - "4000:80"
+    volumes:
+    - /srv/pura/caddy/data:/data
+    - /srv/pura/caddy/config:/config
+    - /srv/shared/pura/output:/srv
+    restart: unless-stopped
+    command: caddy file-server --browse --root /srv

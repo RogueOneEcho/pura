@@ -1,0 +1,91 @@
+[package]
+name = "pura"
+edition = "2021"
+authors = ["RogueOneEcho"]
+description = "Scrape, download and emulate podcast feeds."
+repository = "https://github.com/RogueOneEcho/pura"
+license = "AGPL-3.0-only"
+include = [
+    "src/**/*",
+    "Cargo.lock",
+    "Cargo.toml",
+    "LICENSE.md",
+    "README.md"
+]
+version = "0.0.0"
+publish = true
+
+[dependencies]
+chrono = { version = "0.4.42", features = ["serde"] }
+colored = "3.0.0"
+fast_image_resize = { version = "5.3.0", features = ["image"] }
+futures = "0.3.31"
+image = "0.25.8"
+lofty = "0.22.4"
+log = "0.4.28"
+reqwest = { version = "0.12.23", default-features = false, features = ["blocking", "json", "rustls-tls", "stream"] }
+rogue_config = "0.2.0"
+rogue_logging = "0.3.0"
+rss = { version = "2.0.12", features = ["validation"] }
+scraper = "0.24.0"
+serde = { version = "1.0.225", features = ["derive"] }
+serde_json = "1.0.145"
+serde_yaml = "0.9.34"
+strum_macros = "0.27.2"
+tokio = { version = "1.47.1", features = ["macros", "rt-multi-thread", "fs", "io-util"] }
+urlencoding = "2.1.3"
+url = "2.5.7"
+
+[lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+absolute_paths = "warn"
+arithmetic_side_effects = "allow"
+as_conversions = "warn"
+assigning_clones = "allow"
+cast_possible_truncation = "warn"
+clone_on_ref_ptr = "allow"
+enum_glob_use = "allow"
+expect_used = "allow"
+exhaustive_enums = "allow"
+exhaustive_structs = "allow"
+get_first = "warn"
+if_not_else = "warn"
+if_then_some_else_none = "warn"
+implicit_return = "allow"
+indexing_slicing = "warn"
+integer_division = "warn"
+just_underscores_and_digits = "allow"
+match_same_arms = "warn"
+missing_docs_in_private_items = "allow"
+missing_errors_doc = "allow"
+missing_inline_in_public_items = "allow"
+missing_panics_doc = "allow"
+mod_module_files = "allow"
+module_inception = "allow"
+module_name_repetitions = "allow"
+needless_pass_by_value = "allow"
+new_without_default = "allow"
+non_ascii_literal = "allow"
+panic = "warn"
+pattern_type_mismatch = "allow"
+pub_use = "allow"
+question_mark_used = "allow"
+separated_literal_suffix = "allow"
+shadow_reuse = "allow"
+shadow_same = "allow"
+shadow_unrelated = "allow"
+single_call_fn = "allow"
+std_instead_of_alloc = "allow"
+std_instead_of_core = "allow"
+str_to_string = "warn"
+string_add = "allow"
+tests_outside_test_module = "allow"
+unneeded_wildcard_pattern = "warn"
+unseparated_literal_suffix = "warn"
+unused_self = "warn"
+unwrap_used = "warn"
+wildcard_enum_match_arm = "allow"
+wildcard_imports = "allow"
+wrong_self_convention = "allow"
+result_large_err = "allow"
+await_holding_lock = "allow"
