@@ -1,4 +1,6 @@
-pub use crate::scrape::command::*;
+pub use scrape::*;
+pub(super) use scrape_simplecast::*;
 
-pub mod command;
+pub mod scrape;
+mod scrape_simplecast;
 mod simplecast;

@@ -37,7 +37,7 @@ impl DownloadCommand {
         }
     }
 
-    pub async fn execute(self, podcast_id: &str, year: Option<i32>) -> Result<(), DownloadError> {
+    pub async fn execute(&self, podcast_id: &str, year: Option<i32>) -> Result<(), DownloadError> {
         let podcast = self
             .podcasts
             .get(podcast_id)
