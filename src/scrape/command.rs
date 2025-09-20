@@ -215,7 +215,7 @@ mod tests {
         let _ = init_logging();
         let services = ServiceProvider::create()
             .await
-            .expect("Startup should succeed");
+            .expect("ServiceProvider should not fail");
         let command = ScrapeCommand::new(services.http, services.podcasts);
         let url = Url::parse("https://irlpodcast.org").expect("URL should parse");
 

@@ -416,7 +416,7 @@ mod tests {
         let _ = init_logging();
         let services = ServiceProvider::create()
             .await
-            .expect("Startup should succeed");
+            .expect("ServiceProvider should not fail");
         let command = DownloadCommand::new(services.paths, services.http, services.podcasts);
 
         // Act
@@ -432,7 +432,7 @@ mod tests {
         let _ = init_logging();
         let services = ServiceProvider::create()
             .await
-            .expect("Startup should succeed");
+            .expect("ServiceProvider should not fail");
         let podcast = services.podcasts.get(&"irl").expect("podcast should exist");
         let command = DownloadCommand::new(services.paths, services.http, services.podcasts);
         let episode = podcast

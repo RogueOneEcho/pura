@@ -30,9 +30,9 @@ impl HttpClient {
         match serde_json::from_reader(reader) {
             Ok(json) => Ok(json),
             Err(e) => {
-                let _ = self.remove(url, Some(JSON_EXTENSION));
+                self.remove(url, Some(JSON_EXTENSION)).await;
                 Err(HttpError::InvalidJson(path, e))
-            },
+            }
         }
     }
 

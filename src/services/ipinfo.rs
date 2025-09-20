@@ -18,6 +18,9 @@ impl IpInfoProvider {
     }
 
     pub(crate) async fn validate(&self) -> Result<(), Vec<ValidationError>> {
+        if self.options.expect_ip.is_none() && self.options.expect_country.is_none() {
+            return Ok(());
+        }
         let info = self
             .get()
             .await
