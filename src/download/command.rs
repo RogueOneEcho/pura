@@ -37,12 +37,12 @@ impl DownloadCommand {
         }
     }
 
-    pub async fn execute(self, podcast_id: &str) -> Result<(), DownloadError> {
+    pub async fn execute(self, podcast_id: &str, year: Option<i32>) -> Result<(), DownloadError> {
         let podcast = self
             .podcasts
             .get(podcast_id)
             .map_err(DownloadError::GetPodcast)?;
-        let results = self.process_episodes(podcast.clone()).await;
+        let results = self.process_episodes(podcast.clone(), year).await;
         let mut episodes = Vec::new();
         let mut errors = Vec::new();
         for result in results {
@@ -72,10 +72,19 @@ impl DownloadCommand {
         Ok(())
     }
 
-    async fn process_episodes(&self, mut podcast: Podcast) -> Vec<Result<Episode, ProcessError>> {
+    async fn process_episodes(
+        &self,
+        mut podcast: Podcast,
+        year: Option<i32>,
+    ) -> Vec<Result<Episode, ProcessError>> {
         let episodes: Vec<_> = take(&mut podcast.episodes)
             .into_iter()
             .filter(|episode| {
+                if let Some(year) = year {
+                    if episode.published_at.year() != year {
+                        return false;
+                    }
+                }
                 let exists = self
                     .paths
                     .get_output_path_for_audio(&podcast.id, episode)
@@ -143,9 +152,9 @@ impl DownloadCommand {
                 ProcessError::IO(episode.get_file_stem(), destination_dir.into(), e)
             })?;
         }
-        debug!("{} {episode}", "Copying".bold());
         trace!(
-            "Source: {}\nTarget: {}",
+            "{} {episode}\nSource: {}\nTarget: {}",
+            "Copying".bold(),
             source_path.display(),
             destination_path.display()
         );
@@ -159,7 +168,7 @@ impl DownloadCommand {
         let Some(url) = &episode.image_url else {
             return Ok(None);
         };
-        debug!("{} image for episode: {episode}", "Downloading".bold());
+        trace!("{} image for episode: {episode}", "Downloading".bold());
         let extension = url.get_extension();
         let mime_type = match extension.clone().map(|e| e.to_lowercase()).as_deref() {
             Some(JPG_EXTENSION | JPEG_EXTENSION) => MimeType::Jpeg,
@@ -177,14 +186,14 @@ impl DownloadCommand {
             .get(url, extension.as_deref())
             .await
             .map_err(|e| ProcessError::DownloadImage(episode.get_file_stem(), e))?;
-        debug!("{} image for episode: {episode}", "Resizing".bold());
+        trace!("{} image for episode: {episode}", "Resizing".bold());
         let m = mime_type.clone();
         let img_bytes =
             spawn_blocking(move || -> Result<Vec<u8>, ResizeError> { resize_image(&path, &m) })
                 .await
                 .map_err(|e| ProcessError::Task(episode.get_file_stem(), e))?
                 .map_err(|e| ProcessError::ResizeImage(episode.get_file_stem(), e))?;
-        debug!("{} image for episode: {episode}", "Resized".bold());
+        trace!("{} image for episode: {episode}", "Resized".bold());
         let cover =
             Picture::new_unchecked(PictureType::CoverFront, Some(mime_type), None, img_bytes);
         Ok(Some(cover))
@@ -411,7 +420,7 @@ mod tests {
         let command = DownloadCommand::new(services.paths, services.http, services.podcasts);
 
         // Act
-        command.execute("irl").await?;
+        command.execute("irl", Some(2019)).await?;
 
         // Assert
         Ok(())

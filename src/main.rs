@@ -34,7 +34,8 @@ async fn download(services: ServiceProvider, args: Vec<String>) {
         error!("Missing id");
         exit(1);
     };
-    if let Err(e) = command.execute(id).await {
+    let year = args.get(3).and_then(|s| s.parse::<i32>().ok());
+    if let Err(e) = command.execute(id, year).await {
         error!("{e}");
         exit(1);
     }
