@@ -433,12 +433,11 @@ mod tests {
         let services = ServiceProvider::create()
             .await
             .expect("ServiceProvider should not fail");
-        let podcast = services.podcasts.get(&"irl").expect("podcast should exist");
+        let podcast = services.podcasts.get("irl").expect("podcast should exist");
         let command = DownloadCommand::new(services.paths, services.http, services.podcasts);
         let episode = podcast
             .episodes
-            .iter()
-            .nth(1)
+            .get(1)
             .expect("should be at least one episode")
             .clone();
 

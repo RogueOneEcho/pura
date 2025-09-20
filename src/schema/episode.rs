@@ -87,9 +87,9 @@ impl Episode {
     #[cfg(test)]
     pub(crate) fn example() -> Self {
         Self {
-            id: "550e8400-e29b-41d4-a716-446655440000".to_string(),
-            title: "Lorem ipsum dolor sit amet".to_string(),
-            description: "Aenean sit amet sem quis velit viverra vestibulum. Vivamus aliquam mattis ipsum, a dignissim elit pulvinar vitae. Aliquam neque risus, tincidunt sit amet elit quis, malesuada ultrices urna.".to_string(),
+            id: "550e8400-e29b-41d4-a716-446655440000".to_owned(),
+            title: "Lorem ipsum dolor sit amet".to_owned(),
+            description: "Aenean sit amet sem quis velit viverra vestibulum. Vivamus aliquam mattis ipsum, a dignissim elit pulvinar vitae. Aliquam neque risus, tincidunt sit amet elit quis, malesuada ultrices urna.".to_owned(),
             image_url: Some(Url::parse("https://example.com/image.jpg").expect("URL should be valid")),
             audio_url: Url::parse("https://example.com/season-1/episode-1.mp3").expect("URL should be valid"),
             episode_type: Default::default(),

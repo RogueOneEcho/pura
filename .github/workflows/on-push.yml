@@ -137,13 +137,6 @@ jobs:
 
     - if: matrix.test
       run: |
-        tee config.yml <<EOF
-        url: ${{ secrets.TEST_URL }}
-        cache_dir: ''
-        EOF
-
-    - if: matrix.test
-      run: |
         mkdir -p cache/http
         mkdir -p cache/podcasts
 

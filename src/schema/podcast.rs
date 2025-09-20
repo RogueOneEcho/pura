@@ -69,12 +69,12 @@ impl Podcast {
     #[cfg(test)]
     pub(crate) fn example() -> Self {
         Self {
-            id: "test".to_string(),
+            id: "test".to_owned(),
             guid: "29e09be7-ee09-4671-9130-0da5b958e9a2".to_owned(),
             title: "Podcast Title".to_owned(),
-            description: "Sed ac volutpat tortor. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Suspendisse placerat leo augue, id elementum orci venenatis eu.".to_string(),
+            description: "Sed ac volutpat tortor. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Suspendisse placerat leo augue, id elementum orci venenatis eu.".to_owned(),
             image_url: None,
-            language: "en-us".to_string(),
+            language: "en-us".to_owned(),
             category: None,
             sub_category: None,
             explicit: false,
@@ -148,7 +148,7 @@ mod tests {
         // Assert
         let result = channel.validate();
         if let Err(e) = result {
-            println!("{:?}", e);
+            println!("{e:?}");
             assert!(false);
         }
     }

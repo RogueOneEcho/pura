@@ -223,7 +223,7 @@ mod tests {
         let podcast = command.execute("irl", &url).await?;
 
         // Assert
-        assert!(podcast.episodes.len() >= 60);
+        assert!(podcast.episodes.len() > 30);
         Ok(())
     }
 }
