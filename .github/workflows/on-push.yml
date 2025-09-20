@@ -64,10 +64,8 @@ jobs:
           target: x86_64-unknown-linux-musl
         - os: macos-13
           target: x86_64-apple-darwin
-          test: true
         - os: macos-14
           target: aarch64-apple-darwin
-          test: true
 
     steps:
 
