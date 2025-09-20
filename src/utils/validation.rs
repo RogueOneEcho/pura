@@ -3,14 +3,21 @@ use crate::prelude::*;
 pub struct Validate;
 
 impl Validate {
-    pub(crate) fn directory(field: &str, dir: PathBuf) -> Result<(), ValidationError> {
+    pub(crate) fn directory(dir: PathBuf) -> Result<(), PathValidationError> {
         if dir == PathBuf::new() {
-            return Err(ValidationError::RequiredPath(field.to_owned()));
+            return Err(PathValidationError::Required);
         }
         if !dir.is_dir() {
-            return Err(ValidationError::DirectoryNotExist(
-                field.to_owned(),
-                dir.clone(),
+            return Err(PathValidationError::NotDirectory(dir.clone()));
+        }
+        Ok(())
+    }
+
+    pub(crate) fn expect(expected: &str, actual: &str) -> Result<(), StringValidationError> {
+        if expected == actual {
+            return Err(StringValidationError::Expected(
+                expected.to_owned(),
+                actual.to_owned(),
             ));
         }
         Ok(())
@@ -19,26 +26,60 @@ impl Validate {
 
 #[derive(Debug)]
 pub enum ValidationError {
-    RequiredPath(String),
-    PathNotExist(String, PathBuf),
-    DirectoryNotExist(String, PathBuf),
-    FileNotExist(String, PathBuf),
+    String(String, StringValidationError),
+    Path(String, PathValidationError),
+}
+
+#[derive(Debug)]
+pub enum StringValidationError {
+    Required,
+    Expected(String, String),
+}
+
+#[derive(Debug)]
+pub enum PathValidationError {
+    Required,
+    PathNotExist(PathBuf),
+    NotDirectory(PathBuf),
+    NotFile(PathBuf),
 }
 
 impl Display for ValidationError {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         match self {
-            ValidationError::RequiredPath(name) => {
-                write!(f, "{name} is required")
+            ValidationError::Path(name, error) => {
+                write!(f, "{name} {}", error.log())
             }
-            ValidationError::PathNotExist(name, path) => {
-                write!(f, "{name} does not exist:\n{}", path.display())
+            ValidationError::String(name, error) => {
+                write!(f, "{name} {}", error.log())
             }
-            ValidationError::DirectoryNotExist(name, path) => {
-                write!(f, "{name} is not a directory:\n{}", path.display())
+        }
+    }
+}
+
+impl StringValidationError {
+    fn log(&self) -> String {
+        match self {
+            StringValidationError::Required => "is required".to_owned(),
+            StringValidationError::Expected(expected, actual) => {
+                format!("did not match.\nexpected: {expected}\nactual: {actual}")
             }
-            ValidationError::FileNotExist(name, path) => {
-                write!(f, "{name} is not a file:\n{}", path.display())
+        }
+    }
+}
+
+impl PathValidationError {
+    fn log(&self) -> String {
+        match self {
+            PathValidationError::Required => "is required".to_owned(),
+            PathValidationError::PathNotExist(path) => {
+                format!("does not exist:\n{}", path.display())
+            }
+            PathValidationError::NotDirectory(path) => {
+                format!("is not a directory:\n{}", path.display())
+            }
+            PathValidationError::NotFile(path) => {
+                format!("is not a file:\n{}", path.display())
             }
         }
     }

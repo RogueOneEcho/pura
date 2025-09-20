@@ -90,8 +90,8 @@ impl PathProvider {
             ("Output directory", self.get_output_dir()),
         ];
         for (name, dir) in dirs {
-            if let Err(e) = Validate::directory(name, dir) {
-                errors.push(e);
+            if let Err(e) = Validate::directory(dir) {
+                errors.push(ValidationError::Path(name.to_owned(), e));
             }
         }
         if errors.is_empty() {
