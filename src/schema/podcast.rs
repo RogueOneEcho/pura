@@ -80,7 +80,7 @@ impl Podcast {
             explicit: false,
             author: None,
             link: Url::parse("https://example.com/").expect("URL should be valid"),
-            podcast_type: Default::default(),
+            podcast_type: PodcastType::default(),
             copyright: None,
             created_at: Utc::now().naive_utc(),
             episodes: vec![Episode::example()],
@@ -147,9 +147,6 @@ mod tests {
 
         // Assert
         let result = channel.validate();
-        if let Err(e) = result {
-            println!("{e:?}");
-            assert!(false);
-        }
+        result.assert_ok();
     }
 }

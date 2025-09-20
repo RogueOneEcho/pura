@@ -411,7 +411,7 @@ mod tests {
     use super::*;
 
     #[tokio::test]
-    pub async fn download_command() -> Result<(), DownloadError> {
+    pub async fn download_command() {
         // Arrange
         let _ = init_logging();
         let services = ServiceProvider::create()
@@ -420,14 +420,14 @@ mod tests {
         let command = DownloadCommand::new(services.paths, services.http, services.podcasts);
 
         // Act
-        command.execute("irl", Some(2019)).await?;
+        let result = command.execute("irl", Some(2019)).await;
 
         // Assert
-        Ok(())
+        result.assert_ok();
     }
 
     #[tokio::test]
-    pub async fn process_episode() -> Result<(), ProcessError> {
+    pub async fn process_episode() {
         // Arrange
         let _ = init_logging();
         let services = ServiceProvider::create()
@@ -442,9 +442,9 @@ mod tests {
             .clone();
 
         // Act
-        let _ = command.process_episode(&podcast, episode).await?;
+        let result = command.process_episode(&podcast, episode).await;
 
         // Assert
-        Ok(())
+        result.assert_ok();
     }
 }

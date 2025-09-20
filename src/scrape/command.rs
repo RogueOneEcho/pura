@@ -210,7 +210,7 @@ mod tests {
     use super::*;
 
     #[tokio::test]
-    pub async fn scrape_command() -> Result<(), ScrapeError> {
+    pub async fn scrape_command() {
         // Arrange
         let _ = init_logging();
         let services = ServiceProvider::create()
@@ -220,10 +220,10 @@ mod tests {
         let url = Url::parse("https://irlpodcast.org").expect("URL should parse");
 
         // Act
-        let podcast = command.execute("irl", &url).await?;
+        let result = command.execute("irl", &url).await;
 
         // Assert
+        let podcast = result.assert_ok();
         assert!(podcast.episodes.len() > 30);
-        Ok(())
     }
 }

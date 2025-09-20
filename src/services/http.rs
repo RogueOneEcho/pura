@@ -181,7 +181,7 @@ mod tests {
     use serde_json::Value;
 
     #[tokio::test]
-    pub async fn get() -> Result<(), HttpError> {
+    pub async fn get() {
         // Arrange
         let _ = init_logging();
         let http = HttpClient::default();
@@ -190,16 +190,16 @@ mod tests {
         http.remove(&url, Some("html")).await;
 
         // Act
-        let path = http.get(&url, Some("html")).await?;
+        let result = http.get(&url, Some("html")).await;
 
         // Assert
+        let path = result.assert_ok();
         assert_eq!(path, expected);
         assert!(path.exists());
-        Ok(())
     }
 
     #[tokio::test]
-    pub async fn get_html() -> Result<(), HttpError> {
+    pub async fn get_html() {
         // Arrange
         let _ = init_logging();
         let http = HttpClient::default();
@@ -207,15 +207,15 @@ mod tests {
         http.remove(&url, Some("html")).await;
 
         // Act
-        let _html = http.get_html(&url).await?;
+        let result = http.get_html(&url).await;
 
         // Assert
-        Ok(())
+        let _html = result.assert_ok();
     }
 
     #[tokio::test]
-    #[ignore]
-    pub async fn get_json() -> Result<(), HttpError> {
+    #[ignore = "uses ipinfo.io"]
+    pub async fn get_json() {
         // Arrange
         let _ = init_logging();
         let http = HttpClient::default();
@@ -223,9 +223,9 @@ mod tests {
         http.remove(&url, Some(JSON_EXTENSION)).await;
 
         // Act
-        let _json: Value = http.get_json(&url).await?;
+        let result = http.get_json::<Value>(&url).await;
 
         // Assert
-        Ok(())
+        let _json = result.assert_ok();
     }
 }

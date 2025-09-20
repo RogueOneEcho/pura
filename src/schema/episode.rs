@@ -92,12 +92,12 @@ impl Episode {
             description: "Aenean sit amet sem quis velit viverra vestibulum. Vivamus aliquam mattis ipsum, a dignissim elit pulvinar vitae. Aliquam neque risus, tincidunt sit amet elit quis, malesuada ultrices urna.".to_owned(),
             image_url: Some(Url::parse("https://example.com/image.jpg").expect("URL should be valid")),
             audio_url: Url::parse("https://example.com/season-1/episode-1.mp3").expect("URL should be valid"),
-            episode_type: Default::default(),
+            episode_type: EpisodeType::default(),
             season: Some(2),
             number: Some(3),
             audio_file_size: 1024,
             audio_content_type: "audio/mpeg".to_owned(),
-            published_at: Default::default(),
+            published_at: DateTime::default(),
             duration: None,
             explicit: false,
         }
@@ -123,7 +123,7 @@ impl From<&Episode> for Item {
             pub_date: Some(episode.published_at.to_rfc2822()),
             enclosure: Some(episode.into()),
             itunes_ext: Some(episode.into()),
-            ..Default::default()
+            ..Item::default()
         }
     }
 }

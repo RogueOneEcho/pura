@@ -112,9 +112,6 @@ mod tests {
         let result = paths.validate();
 
         // Assert
-        if let Err(errors) = result {
-            println!("{}", errors.log());
-            assert!(false);
-        }
+        result.assert_ok_debug();
     }
 }

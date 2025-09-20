@@ -76,18 +76,18 @@ mod tests {
     use super::*;
 
     #[tokio::test]
-    #[ignore]
-    async fn validate_env() -> Result<(), ServiceError> {
+    #[ignore = "uses ipinfo.io"]
+    async fn validate_env() {
         // Arrange
         // Act
-        let _services = ServiceProvider::create().await?;
+        let result = ServiceProvider::create().await;
 
         // Assert
-        Ok(())
+        let _services = result.assert_ok();
     }
 
     #[tokio::test]
-    #[ignore]
+    #[ignore = "uses ipinfo.io"]
     async fn validate_none() {
         // Arrange
         let mut ipinfo = IpInfoProvider::default();
@@ -102,7 +102,7 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore]
+    #[ignore = "uses ipinfo.io"]
     async fn validate_invalid() {
         // Arrange
         let mut ipinfo = IpInfoProvider::default();
@@ -113,10 +113,7 @@ mod tests {
         let result = ipinfo.validate().await;
 
         // Assert
-        let Err(errors) = result else {
-            assert!(false);
-            return;
-        };
+        let errors = result.assert_err_debug();
         assert_eq!(errors.len(), 2);
     }
 }

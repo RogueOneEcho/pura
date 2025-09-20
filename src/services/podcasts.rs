@@ -79,18 +79,18 @@ mod tests {
     use super::*;
 
     #[test]
-    pub fn put_then_get() -> Result<(), DatabaseError> {
+    pub fn put_then_get() {
         // Arrange
         let _ = init_logging();
         let podcasts = PodcastProvider::default();
         let podcast = Podcast::example();
 
         // Act
-        podcasts.put(&podcast)?;
-        let result = podcasts.get(&podcast.id)?;
+        podcasts.put(&podcast).assert_ok();
+        let result = podcasts.get(&podcast.id);
 
         // Assert
+        let result = result.assert_ok();
         assert_eq!(podcast, result);
-        Ok(())
     }
 }
