@@ -42,7 +42,7 @@ impl ScrapeCommand {
             .map_err(ScrapeError::GetPage)?;
         let episode_guid = get_simplecast_episode_guid(&html)
             .ok_or_else(|| ScrapeError::SimplecastNotFound(url.clone()))?;
-        debug!(
+        trace!(
             "{} Simplecast player with episode id: {episode_guid}",
             "Found".bold()
         );
@@ -124,7 +124,7 @@ impl ScrapeCommand {
                     Ok(ep) => Some(ep),
                     Err(e) => {
                         warn!("{} to get episode {}", "Failed".bold(), episode.id);
-                        trace!("{e}");
+                        debug!("{e}");
                         None
                     }
                 }

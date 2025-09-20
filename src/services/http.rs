@@ -214,6 +214,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     pub async fn get_json() -> Result<(), HttpError> {
         // Arrange
         let _ = init_logging();

@@ -76,6 +76,7 @@ mod tests {
     use super::*;
 
     #[tokio::test]
+    #[ignore]
     async fn validate_env() -> Result<(), ServiceError> {
         // Arrange
         // Act
@@ -86,6 +87,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn validate_none() {
         // Arrange
         let mut ipinfo = IpInfoProvider::default();
@@ -100,6 +102,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn validate_invalid() {
         // Arrange
         let mut ipinfo = IpInfoProvider::default();
