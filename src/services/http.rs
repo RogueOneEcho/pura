@@ -5,6 +5,7 @@ use tokio::io::AsyncWriteExt;
 use urlencoding::encode;
 
 /// A client for making HTTP requests and caching responses
+#[derive(Clone, Debug)]
 pub struct HttpClient {
     dir: PathBuf,
 }
@@ -23,7 +24,7 @@ impl HttpClient {
     }
 
     pub(crate) async fn get_json<T: DeserializeOwned>(&self, url: &Url) -> Result<T, HttpError> {
-        let path = self.get(url, Some("json")).await?;
+        let path = self.get(url, Some(JSON_EXTENSION)).await?;
         let file = File::open(&path).map_err(|e| HttpError::Io(path.clone(), e))?;
         let reader = BufReader::new(file);
         serde_json::from_reader(reader).map_err(|e| HttpError::InvalidJson(path, e))
@@ -102,10 +103,7 @@ impl HttpClient {
             .await
             .map_err(|e| HttpError::Request(url.clone(), e))?;
         if !response.status().is_success() {
-            return Err(HttpError::Response(
-                url.clone(),
-                response.status().as_u16(),
-            ));
+            return Err(HttpError::Response(url.clone(), response.status().as_u16()));
         }
         let mut file = AsyncFile::create(path)
             .await
@@ -215,7 +213,7 @@ mod tests {
         let _ = init_logging();
         let http = HttpClient::default();
         let url = Url::parse("https://ipinfo.io").expect("url should be valid");
-        http.remove(&url, Some("json")).await;
+        http.remove(&url, Some(JSON_EXTENSION)).await;
 
         // Act
         let _json: Value = http.get_json(&url).await?;

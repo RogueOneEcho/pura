@@ -14,7 +14,7 @@ impl Validate {
     }
 
     pub(crate) fn expect(expected: &str, actual: &str) -> Result<(), StringValidationError> {
-        if expected == actual {
+        if expected != actual {
             return Err(StringValidationError::Expected(
                 expected.to_owned(),
                 actual.to_owned(),
@@ -28,6 +28,7 @@ impl Validate {
 pub enum ValidationError {
     String(String, StringValidationError),
     Path(String, PathValidationError),
+    Http(HttpError),
 }
 
 #[derive(Debug)]
@@ -52,6 +53,9 @@ impl Display for ValidationError {
             }
             ValidationError::String(name, error) => {
                 write!(f, "{name} {}", error.log())
+            }
+            ValidationError::Http(e) => {
+                write!(f, "{e}")
             }
         }
     }
@@ -81,6 +85,29 @@ impl PathValidationError {
             PathValidationError::NotFile(path) => {
                 format!("is not a file:\n{}", path.display())
             }
+        }
+    }
+}
+
+pub trait ValidationErrorExt {
+    fn log(&self) -> String;
+    fn to_result(self) -> Result<(), Vec<ValidationError>>;
+}
+
+impl ValidationErrorExt for Vec<ValidationError> {
+    fn log(&self) -> String {
+        self.iter().fold(String::new(), |mut acc, err| {
+            acc.push('\n');
+            acc.push_str(&err.to_string());
+            acc
+        })
+    }
+
+    fn to_result(self) -> Result<(), Vec<ValidationError>> {
+        if self.is_empty() {
+            Ok(())
+        } else {
+            Err(self)
         }
     }
 }

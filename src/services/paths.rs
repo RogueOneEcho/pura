@@ -5,6 +5,7 @@ const DEFAULT_CACHE_DIR: &str = "cache";
 const DEFAULT_OUTPUT_DIR: &str = "output";
 const HTTP_DIR: &str = "http";
 const PODCASTS_DIR: &str = "podcasts";
+pub(crate) const JSON_EXTENSION: &str = "json";
 pub(crate) const JPG_EXTENSION: &str = "jpg";
 pub(crate) const JPEG_EXTENSION: &str = "jpeg";
 pub(crate) const PNG_EXTENSION: &str = "png";
@@ -94,17 +95,13 @@ impl PathProvider {
                 errors.push(ValidationError::Path(name.to_owned(), e));
             }
         }
-        if errors.is_empty() {
-            Ok(())
-        } else {
-            Err(errors)
-        }
+        errors.to_result()
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::prelude::PathProvider;
+    use super::*;
 
     #[test]
     fn validate() {
@@ -116,9 +113,7 @@ mod tests {
 
         // Assert
         if let Err(errors) = result {
-            for error in errors {
-                println!("{error}");
-            }
+            println!("{}", errors.log());
             assert!(false);
         }
     }
