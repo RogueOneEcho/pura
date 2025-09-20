@@ -27,7 +27,13 @@ impl HttpClient {
         let path = self.get(url, Some(JSON_EXTENSION)).await?;
         let file = File::open(&path).map_err(|e| HttpError::Io(path.clone(), e))?;
         let reader = BufReader::new(file);
-        serde_json::from_reader(reader).map_err(|e| HttpError::InvalidJson(path, e))
+        match serde_json::from_reader(reader) {
+            Ok(json) => Ok(json),
+            Err(e) => {
+                let _ = self.remove(url, Some(JSON_EXTENSION));
+                Err(HttpError::InvalidJson(path, e))
+            },
+        }
     }
 
     pub(crate) async fn get(
