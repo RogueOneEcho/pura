@@ -57,8 +57,8 @@ impl HttpClient {
         if exists {
             trace!("Removing: {}", path.display());
             if let Err(e) = remove_file(&path).await {
-                debug!("Failed to remove: {}", path.display());
-                debug!("{e}");
+                trace!("Failed to remove: {}", path.display());
+                trace!("{e}");
                 return false;
             };
         }
