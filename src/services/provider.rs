@@ -25,7 +25,7 @@ impl ServiceProvider {
     }
 }
 
-async fn get_ip(http: &HttpClient) -> Result<(), ClientError> {
+async fn get_ip(http: &HttpClient) -> Result<(), HttpError> {
     let ip_url = Url::parse("https://ipinfo.io").expect("URL should be valid");
     http.remove(&ip_url, Some("json")).await;
     let ip: Value = http.get_json(&ip_url).await?;
@@ -42,7 +42,7 @@ async fn get_ip(http: &HttpClient) -> Result<(), ClientError> {
 pub enum ServiceError {
     GetConfig(ConfigError),
     ValidateConfig(Vec<ValidationError>),
-    Ip(ClientError),
+    Ip(HttpError),
 }
 
 impl Display for ServiceError {

@@ -324,10 +324,10 @@ impl Display for DownloadError {
 #[derive(Debug)]
 #[allow(clippy::absolute_paths)]
 pub enum ProcessError {
-    DownloadAudio(String, ClientError),
+    DownloadAudio(String, HttpError),
     IO(String, PathBuf, std::io::Error),
     Tag(String, PathBuf, LoftyError),
-    DownloadImage(String, ClientError),
+    DownloadImage(String, HttpError),
     Task(String, JoinError),
     ResizeImage(String, ResizeError),
 }

@@ -183,10 +183,10 @@ fn get_element_attr(html: &Html, selector: &str, attr: &str) -> Vec<String> {
 
 #[derive(Debug)]
 pub enum ScrapeError {
-    GetPage(ClientError),
+    GetPage(HttpError),
     SimplecastNotFound(Url),
-    GetEpisode(String, ClientError),
-    GetPlaylist(String, ClientError),
+    GetEpisode(String, HttpError),
+    GetPlaylist(String, HttpError),
     Save(DatabaseError),
 }
 

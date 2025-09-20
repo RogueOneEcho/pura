@@ -14,26 +14,26 @@ impl HttpClient {
         Self { dir }
     }
 
-    pub(crate) async fn get_html(&self, url: &Url) -> Result<Html, ClientError> {
+    pub(crate) async fn get_html(&self, url: &Url) -> Result<Html, HttpError> {
         let path = self.get(url, Some("html")).await?;
         let contents = read_to_string(&path)
             .await
-            .map_err(|e| ClientError::Io(path, e))?;
+            .map_err(|e| HttpError::Io(path, e))?;
         Ok(Html::parse_document(&contents))
     }
 
-    pub(crate) async fn get_json<T: DeserializeOwned>(&self, url: &Url) -> Result<T, ClientError> {
+    pub(crate) async fn get_json<T: DeserializeOwned>(&self, url: &Url) -> Result<T, HttpError> {
         let path = self.get(url, Some("json")).await?;
-        let file = File::open(&path).map_err(|e| ClientError::Io(path.clone(), e))?;
+        let file = File::open(&path).map_err(|e| HttpError::Io(path.clone(), e))?;
         let reader = BufReader::new(file);
-        serde_json::from_reader(reader).map_err(|e| ClientError::InvalidJson(path, e))
+        serde_json::from_reader(reader).map_err(|e| HttpError::InvalidJson(path, e))
     }
 
     pub(crate) async fn get(
         &self,
         url: &Url,
         extension: Option<&str>,
-    ) -> Result<PathBuf, ClientError> {
+    ) -> Result<PathBuf, HttpError> {
         let path = self.get_cache_path(url, extension);
         if path.exists() {
             trace!("Cache HIT: {url}");
@@ -84,7 +84,7 @@ impl HttpClient {
     }
 
     #[allow(clippy::unused_self)]
-    async fn download_to_cache(&self, url: &Url, path: &PathBuf) -> Result<(), ClientError> {
+    async fn download_to_cache(&self, url: &Url, path: &PathBuf) -> Result<(), HttpError> {
         let dir = path
             .parent()
             .expect("cache path should have a parent directory");
@@ -92,7 +92,7 @@ impl HttpClient {
             trace!("Creating cache directory: {}", dir.display());
             create_dir_all(dir)
                 .await
-                .map_err(|e| ClientError::Io(dir.into(), e))?;
+                .map_err(|e| HttpError::Io(dir.into(), e))?;
         }
         let client = ReqwestClient::new();
         trace!("Downloading {url} to {}", path.display());
@@ -100,24 +100,24 @@ impl HttpClient {
             .get(url.as_str())
             .send()
             .await
-            .map_err(|e| ClientError::Request(url.clone(), e))?;
+            .map_err(|e| HttpError::Request(url.clone(), e))?;
         if !response.status().is_success() {
-            return Err(ClientError::Response(
+            return Err(HttpError::Response(
                 url.clone(),
                 response.status().as_u16(),
             ));
         }
         let mut file = AsyncFile::create(path)
             .await
-            .map_err(|e| ClientError::Io(path.clone(), e))?;
+            .map_err(|e| HttpError::Io(path.clone(), e))?;
         while let Some(chunk) = response
             .chunk()
             .await
-            .map_err(|e| ClientError::ResponseIo(url.clone(), e))?
+            .map_err(|e| HttpError::ResponseIo(url.clone(), e))?
         {
             file.write_all(&chunk)
                 .await
-                .map_err(|e| ClientError::Io(path.clone(), e))?;
+                .map_err(|e| HttpError::Io(path.clone(), e))?;
         }
         Ok(())
     }
@@ -125,7 +125,7 @@ impl HttpClient {
 
 #[allow(clippy::absolute_paths)]
 #[derive(Debug)]
-pub enum ClientError {
+pub enum HttpError {
     Response(Url, u16),
     Request(Url, reqwest::Error),
     Io(PathBuf, std::io::Error),
@@ -133,10 +133,10 @@ pub enum ClientError {
     InvalidJson(PathBuf, serde_json::Error),
 }
 
-impl Display for ClientError {
+impl Display for HttpError {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         let message = match self {
-            ClientError::Response(url, number) => {
+            HttpError::Response(url, number) => {
                 let reason = StatusCode::from_u16(*number)
                     .map(|e| e.canonical_reason())
                     .ok()
@@ -144,17 +144,17 @@ impl Display for ClientError {
                     .unwrap_or_default();
                 format!("Unexpected response status: {number} {reason}\nURL: {url}")
             }
-            ClientError::Request(url, e) => format!("A request error occurred.\nURL:{url}\n{e}"),
-            ClientError::Io(path, e) => {
+            HttpError::Request(url, e) => format!("A request error occurred.\nURL:{url}\n{e}"),
+            HttpError::Io(path, e) => {
                 format!("An I/O error occurred.\nPath: {}\n{e}", path.display())
             }
-            ClientError::InvalidJson(path, e) => {
+            HttpError::InvalidJson(path, e) => {
                 format!(
                     "A deserialization error occurred.\nPath: {}\n{e}",
                     path.display()
                 )
             }
-            ClientError::ResponseIo(url, e) => {
+            HttpError::ResponseIo(url, e) => {
                 format!("A response I/O error occurred.\nURL: {url}\n{e}",)
             }
         };
@@ -177,7 +177,7 @@ mod tests {
     use serde_json::Value;
 
     #[tokio::test]
-    pub async fn get() -> Result<(), ClientError> {
+    pub async fn get() -> Result<(), HttpError> {
         // Arrange
         let _ = init_logging();
         let http = HttpClient::default();
@@ -195,7 +195,7 @@ mod tests {
     }
 
     #[tokio::test]
-    pub async fn get_html() -> Result<(), ClientError> {
+    pub async fn get_html() -> Result<(), HttpError> {
         // Arrange
         let _ = init_logging();
         let http = HttpClient::default();
@@ -210,7 +210,7 @@ mod tests {
     }
 
     #[tokio::test]
-    pub async fn get_json() -> Result<(), ClientError> {
+    pub async fn get_json() -> Result<(), HttpError> {
         // Arrange
         let _ = init_logging();
         let http = HttpClient::default();
