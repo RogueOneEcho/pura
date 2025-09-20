@@ -17,6 +17,6 @@ pub(crate) use std::fmt::Result as FmtResult;
 pub(crate) use std::fmt::{Display, Formatter};
 pub(crate) use std::fs::File;
 pub(crate) use std::io::{BufReader, BufWriter};
-pub(crate) use std::path::PathBuf;
+pub(crate) use std::path::{Path, PathBuf};
 pub(crate) use tokio::fs::File as AsyncFile;
 pub use url::Url;

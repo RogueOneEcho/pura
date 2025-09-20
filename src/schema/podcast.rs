@@ -3,6 +3,8 @@ use crate::prelude::*;
 use chrono::Utc;
 use rss::extension::itunes::ITunesChannelExtension;
 use rss::Channel;
+use std::error::Error;
+use std::num::ParseIntError;
 use strum_macros::AsRefStr;
 
 /// Podcast or Channel
@@ -45,7 +47,7 @@ pub struct Podcast {
     pub podcast_type: PodcastType,
     /// Copyright details
     pub copyright: Option<String>,
-    pub created_at: NaiveDateTime,
+    pub created_at: Option<NaiveDateTime>,
     pub episodes: Vec<Episode>,
 }
 
@@ -82,7 +84,7 @@ impl Podcast {
             link: Url::parse("https://example.com/").expect("URL should be valid"),
             podcast_type: PodcastType::default(),
             copyright: None,
-            created_at: Utc::now().naive_utc(),
+            created_at: Some(Utc::now().naive_utc()),
             episodes: vec![Episode::example()],
         }
     }
@@ -131,6 +133,53 @@ impl From<String> for PodcastType {
         }
     }
 }
+
+impl TryFrom<Channel> for Podcast {
+    type Error = PodcastConvertError;
+    fn try_from(channel: Channel) -> Result<Self, Self::Error> {
+        let itunes = channel
+            .itunes_ext
+            .ok_or(PodcastConvertError::Required("itunes".to_owned()))?;
+        Ok(Podcast {
+            id: String::new(),
+            guid: String::new(),
+            title: channel.title,
+            description: channel.description,
+            image_url: itunes.image.and_then(|u| Url::parse(&u).ok()),
+            language: channel.language.unwrap_or_default(),
+            category: itunes.categories.first().map(|c| c.text.clone()),
+            sub_category: itunes.categories.get(1).map(|c| c.text.clone()),
+            explicit: itunes.explicit.unwrap_or_default() == "true",
+            author: itunes.author,
+            link: Url::parse(&channel.link)
+                .map_err(|e| PodcastConvertError::Url("link".to_owned(), e))?,
+            podcast_type: itunes.r#type.unwrap_or_default().into(),
+            copyright: channel.copyright,
+            created_at: None,
+            episodes: channel
+                .items
+                .into_iter()
+                .map(Episode::try_from)
+                .collect::<Result<Vec<_>, _>>()?,
+        })
+    }
+}
+
+#[derive(Debug)]
+pub enum PodcastConvertError {
+    Required(String),
+    Url(String, url::ParseError),
+    Date(String, chrono::ParseError),
+    Integer(String, ParseIntError),
+}
+
+impl Display for PodcastConvertError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        write!(f, "{self:?}")
+    }
+}
+
+impl Error for PodcastConvertError {}
 
 #[cfg(test)]
 mod tests {

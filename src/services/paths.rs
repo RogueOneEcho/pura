@@ -5,11 +5,14 @@ const DEFAULT_CACHE_DIR: &str = "cache";
 const DEFAULT_OUTPUT_DIR: &str = "output";
 const HTTP_DIR: &str = "http";
 const PODCASTS_DIR: &str = "podcasts";
+pub(crate) const HEAD_EXTENSION: &str = "head";
+pub(crate) const HTML_EXTENSION: &str = "html";
 pub(crate) const JSON_EXTENSION: &str = "json";
 pub(crate) const JPG_EXTENSION: &str = "jpg";
 pub(crate) const JPEG_EXTENSION: &str = "jpeg";
 pub(crate) const PNG_EXTENSION: &str = "png";
 pub(crate) const MP3_EXTENSION: &str = "mp3";
+pub(crate) const XML_EXTENSION: &str = "xml";
 const RSS_FILE_NAME: &str = "feed.xml";
 
 #[derive(Default)]

@@ -34,7 +34,7 @@ impl From<SimplecastPodcast> for Podcast {
             link: podcast.site.external_website,
             podcast_type: podcast.podcast_type.into(),
             copyright: podcast.copyright,
-            created_at: podcast.created_at,
+            created_at: Some(podcast.created_at),
             episodes: vec![],
         }
     }

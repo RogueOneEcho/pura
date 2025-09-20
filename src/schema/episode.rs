@@ -165,6 +165,49 @@ impl From<String> for EpisodeType {
     }
 }
 
+impl TryFrom<Item> for Episode {
+    type Error = PodcastConvertError;
+    fn try_from(item: Item) -> Result<Self, PodcastConvertError> {
+        let enclosure = item
+            .enclosure
+            .ok_or(PodcastConvertError::Required("enclosure".to_owned()))?;
+        let itunes = item
+            .itunes_ext
+            .ok_or(PodcastConvertError::Required("itunes".to_owned()))?;
+        let published_at = item
+            .pub_date
+            .ok_or(PodcastConvertError::Required("published_at".to_owned()))?;
+        Ok(Episode {
+            id: item
+                .guid
+                .ok_or(PodcastConvertError::Required("id".to_owned()))?
+                .value,
+            title: item
+                .title
+                .ok_or(PodcastConvertError::Required("title".to_owned()))?,
+            description: item.description.unwrap_or_default(),
+            audio_url: Url::parse(&enclosure.url)
+                .map_err(|e| PodcastConvertError::Url("audio url".to_owned(), e))?,
+            audio_file_size: enclosure
+                .length
+                .parse::<u64>()
+                .map_err(|e| PodcastConvertError::Integer("audio file size".to_owned(), e))?,
+            audio_content_type: enclosure.mime_type,
+            duration: itunes.duration.and_then(|d| d.parse::<u64>().ok()),
+            image_url: itunes.image.and_then(|u| Url::parse(&u).ok()),
+            explicit: itunes.explicit.unwrap_or_default() == "true",
+            episode_type: itunes
+                .episode_type
+                .unwrap_or_else(|| "full".to_owned())
+                .into(),
+            season: itunes.season.and_then(|s| s.parse::<usize>().ok()),
+            number: itunes.episode.and_then(|n| n.parse::<usize>().ok()),
+            published_at: DateTime::parse_from_rfc2822(&published_at)
+                .map_err(|e| PodcastConvertError::Date("published at".to_owned(), e))?,
+        })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
