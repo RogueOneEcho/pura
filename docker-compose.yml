@@ -18,6 +18,8 @@ services:
     volumes:
     - /srv/shared/pura:/srv/shared/pura
     environment:
+      EXPECT_IP: ${EXPECT_IP}
+      EXPECT_COUNTRY: ${EXPECT_COUNTRY}
       CACHE_DIR: /srv/shared/pura/cache
       OUTPUT_DIR: /srv/shared/pura/output
       SERVER_BASE: ${SERVER_BASE}
