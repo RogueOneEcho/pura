@@ -11,12 +11,9 @@ use lofty::id3::v2::Id3v2Tag;
 use lofty::picture::{MimeType, Picture, PictureType};
 use lofty::prelude::{Accessor, TagExt};
 use lofty::tag::TagType;
-use rss::{Channel, Item};
-use std::collections::HashMap;
 use std::mem::take;
 use tokio::fs::copy;
 use tokio::fs::create_dir_all;
-use tokio::io::AsyncWriteExt;
 use tokio::task::{spawn_blocking, JoinError};
 
 const CONCURRENCY: usize = 8;
@@ -64,8 +61,6 @@ impl DownloadCommand {
                 errors.len()
             );
         }
-        let feeds = self.save_feeds(&podcast).await?;
-        info!("{} {} rss feeds", "Created".bold(), feeds.len());
         Ok(())
     }
 
@@ -195,64 +190,6 @@ impl DownloadCommand {
             Picture::new_unchecked(PictureType::CoverFront, Some(mime_type), None, img_bytes);
         Ok(Some(cover))
     }
-
-    async fn save_feeds(&self, podcast: &Podcast) -> Result<Vec<PathBuf>, DownloadError> {
-        let mut paths = Vec::new();
-        paths.push(self.save_feed(podcast, None, None).await?);
-        let mut podcast = podcast.clone();
-        let groups = group_by_season(take(&mut podcast.episodes));
-        for (season, episodes) in groups {
-            let mut p = podcast.clone();
-            p.episodes = episodes;
-            paths.push(self.save_feed(&p, season, None).await?);
-            let year_groups = group_by_year(take(&mut p.episodes));
-            for (year, episodes) in year_groups {
-                p.episodes = episodes;
-                paths.push(self.save_feed(&p, season, Some(year)).await?);
-            }
-        }
-        Ok(paths)
-    }
-
-    async fn save_feed(
-        &self,
-        podcast: &Podcast,
-        season: Option<usize>,
-        year: Option<i32>,
-    ) -> Result<PathBuf, DownloadError> {
-        let mut channel: Channel = podcast.into();
-        for item in &mut channel.items {
-            self.replace_enclosure(podcast, item);
-        }
-        let xml = channel.to_string();
-        let path = self
-            .paths
-            .get_output_path_for_rss(&podcast.id, season, year);
-        let mut file = AsyncFile::create(&path)
-            .await
-            .map_err(|e| DownloadError::Xml(path.clone(), e))?;
-        file.write_all(xml.as_bytes())
-            .await
-            .map_err(|e| DownloadError::Xml(path.clone(), e))?;
-        file.flush()
-            .await
-            .map_err(|e| DownloadError::Xml(path.clone(), e))?;
-        Ok(path)
-    }
-
-    fn replace_enclosure(&self, podcast: &Podcast, item: &mut Item) -> Option<()> {
-        let guid = item.guid.clone()?;
-        let episode = podcast
-            .episodes
-            .iter()
-            .find(|episode| episode.id == guid.value)?;
-        let enclosure = item.enclosure.as_mut()?;
-        enclosure.url = self
-            .paths
-            .get_url_for_audio(&podcast.id, episode)?
-            .to_string();
-        Some(())
-    }
 }
 
 fn resize_image(path: &PathBuf, mime_type: &MimeType) -> Result<Vec<u8>, ResizeError> {
@@ -333,39 +270,16 @@ fn create_tags(podcast: &Podcast, episode: &Episode, cover: Option<Picture>) -> 
     tag
 }
 
-fn group_by_season(episodes: Vec<Episode>) -> HashMap<Option<usize>, Vec<Episode>> {
-    let mut groups: HashMap<Option<usize>, Vec<Episode>> = HashMap::new();
-    for episode in episodes {
-        let group = groups.entry(episode.season).or_default();
-        group.push(episode);
-    }
-    groups
-}
-
-fn group_by_year(episodes: Vec<Episode>) -> HashMap<i32, Vec<Episode>> {
-    let mut groups: HashMap<i32, Vec<Episode>> = HashMap::new();
-    for episode in episodes {
-        let year = episode.published_at.year();
-        let group = groups.entry(year).or_default();
-        group.push(episode);
-    }
-    groups
-}
-
 #[allow(clippy::absolute_paths)]
 #[derive(Debug)]
 pub enum DownloadError {
     GetPodcast(DatabaseError),
-    Xml(PathBuf, std::io::Error),
 }
 
 impl Display for DownloadError {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         let reason = match self {
             DownloadError::GetPodcast(e) => format!("Unable to get podcast\n{e}"),
-            DownloadError::Xml(path, e) => {
-                format!("Unable to write RSS\nPath: {}\n{e}", path.display())
-            }
         };
         write!(f, "{} to download\n{reason}", "Failed".bold())
     }

@@ -21,23 +21,13 @@ async fn main() {
         "download" => {
             download(services, args).await;
         }
+        "create-feeds" => {
+            feeds(services, args).await;
+        }
         arg => {
             error!("Unknown command: `{arg}`");
             exit(1);
         }
-    }
-}
-
-async fn download(services: ServiceProvider, args: Vec<String>) {
-    let command = DownloadCommand::new(services.paths, services.http, services.podcasts);
-    let Some(id) = args.get(2) else {
-        error!("Missing id");
-        exit(1);
-    };
-    let year = args.get(3).and_then(|s| s.parse::<i32>().ok());
-    if let Err(e) = command.execute(id, year).await {
-        error!("{e}");
-        exit(1);
     }
 }
 
@@ -59,6 +49,31 @@ async fn scrape(services: ServiceProvider, args: Vec<String>) {
         }
     };
     if let Err(e) = command.execute(id, &url).await {
+        error!("{e}");
+        exit(1);
+    }
+}
+
+async fn download(services: ServiceProvider, args: Vec<String>) {
+    let command = DownloadCommand::new(services.paths, services.http, services.podcasts);
+    let Some(id) = args.get(2) else {
+        error!("Missing id");
+        exit(1);
+    };
+    let year = args.get(3).and_then(|s| s.parse::<i32>().ok());
+    if let Err(e) = command.execute(id, year).await {
+        error!("{e}");
+        exit(1);
+    }
+}
+
+async fn feeds(services: ServiceProvider, args: Vec<String>) {
+    let command = FeedsCommand::new(services.podcasts, services.paths);
+    let Some(id) = args.get(2) else {
+        error!("Missing id");
+        exit(1);
+    };
+    if let Err(e) = command.execute(id).await {
         error!("{e}");
         exit(1);
     }
