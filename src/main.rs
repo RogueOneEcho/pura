@@ -1,10 +1,10 @@
 use pura::prelude::*;
-use std::env::args;
 use std::process::exit;
 
 #[tokio::main]
 async fn main() {
     let _ = init_logging();
+    let cli = Cli::parse();
     let services = match ServiceProvider::create().await {
         Ok(services) => services,
         Err(e) => {
@@ -12,69 +12,43 @@ async fn main() {
             exit(1);
         }
     };
-    let args: Vec<_> = args().collect();
-    let command = args.get(1).cloned().unwrap_or_default();
-    match command.as_str() {
-        "scrape" => {
-            scrape(services, args).await;
+    match cli.command {
+        Command::Scrape(options) => {
+            let command = ScrapeCommand::new(services.http, services.podcasts);
+            if let Err(e) = command.execute(options).await {
+                error!("{e}");
+                exit(1);
+            }
         }
-        "download" => {
-            download(services, args).await;
+        Command::Download(options) => {
+            let command = DownloadCommand::new(services.paths, services.http, services.podcasts);
+            if let Err(e) = command.execute(options).await {
+                error!("{e}");
+                exit(1);
+            }
         }
-        "create-feeds" => {
-            feeds(services, args).await;
-        }
-        arg => {
-            error!("Unknown command: `{arg}`");
-            exit(1);
+        Command::CreateFeeds(options) => {
+            let command = FeedsCommand::new(services.podcasts, services.paths);
+            if let Err(e) = command.execute(options).await {
+                error!("{e}");
+                exit(1);
+            }
         }
     }
 }
 
-async fn scrape(services: ServiceProvider, args: Vec<String>) {
-    let command = ScrapeCommand::new(services.http, services.podcasts);
-    let Some(id) = args.get(2) else {
-        error!("Missing id");
-        exit(1);
-    };
-    let Some(url) = args.get(3) else {
-        error!("Missing url");
-        exit(1);
-    };
-    let url = match Url::parse(url) {
-        Ok(url) => url,
-        Err(e) => {
-            error!("Invalid URL: {url}\n{e}");
-            exit(1);
-        }
-    };
-    if let Err(e) = command.execute(id, &url).await {
-        error!("{e}");
-        exit(1);
-    }
+#[derive(Debug, Parser)]
+struct Cli {
+    #[command(subcommand)]
+    command: Command,
 }
 
-async fn download(services: ServiceProvider, args: Vec<String>) {
-    let command = DownloadCommand::new(services.paths, services.http, services.podcasts);
-    let Some(id) = args.get(2) else {
-        error!("Missing id");
-        exit(1);
-    };
-    let year = args.get(3).and_then(|s| s.parse::<i32>().ok());
-    if let Err(e) = command.execute(id, year).await {
-        error!("{e}");
-        exit(1);
-    }
-}
-
-async fn feeds(services: ServiceProvider, args: Vec<String>) {
-    let command = FeedsCommand::new(services.podcasts, services.paths);
-    let Some(id) = args.get(2) else {
-        error!("Missing id");
-        exit(1);
-    };
-    if let Err(e) = command.execute(id).await {
-        error!("{e}");
-        exit(1);
-    }
+#[derive(Debug, Subcommand)]
+enum Command {
+    /// Scrape a podcast from an RSS feed or website.
+    Scrape(ScrapeOptions),
+    /// Download episodes of a scraped podcast.
+    Download(DownloadOptions),
+    /// Create RSS feeds for a scraped podcast.
+    CreateFeeds(FeedsOptions),
 }

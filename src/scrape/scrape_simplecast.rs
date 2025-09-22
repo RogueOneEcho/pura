@@ -6,10 +6,9 @@ const CONCURRENCY: usize = 8;
 impl ScrapeCommand {
     pub(super) async fn execute_simplecast(
         &self,
-        podcast_id: &str,
-        url: &Url,
+        options: &ScrapeOptions,
     ) -> Result<Podcast, ScrapeSimplecastError> {
-        let player_id = self.get_player_id(url).await?;
+        let player_id = self.get_player_id(&options.url).await?;
         let episode = self.get_episode(&player_id).await?;
         let podcast = self.get_podcast(&episode).await?;
         let playlist = self.get_playlist(&episode).await?;
@@ -24,7 +23,7 @@ impl ScrapeCommand {
         if diff > 0 {
             warn!("{} {} episodes due to failures", "Skipped".bold(), diff);
         }
-        Ok(convert(podcast_id, podcast, episodes))
+        Ok(convert(&options.podcast_id, podcast, episodes))
     }
 
     async fn get_player_id(&self, url: &Url) -> Result<String, ScrapeSimplecastError> {

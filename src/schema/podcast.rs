@@ -50,6 +50,22 @@ pub struct Podcast {
     pub episodes: Vec<Episode>,
 }
 
+impl Podcast {
+    pub(crate) fn validate_id(id: &str) -> Result<String, String> {
+        if id.is_empty() {
+            return Err("Value must not be empty".to_owned());
+        }
+        if id
+            .chars()
+            .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '-')
+        {
+            Ok(id.to_owned())
+        } else {
+            Err("Podcast ID must contain only lowercase letters and hyphens".to_owned())
+        }
+    }
+}
+
 /// Episodic or Serial
 #[derive(AsRefStr, Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
 pub enum PodcastType {
@@ -184,6 +200,16 @@ impl Error for PodcastConvertError {}
 mod tests {
     use super::*;
     use rss::validation::Validate;
+
+    #[test]
+    fn validate_id() {
+        assert!(Podcast::validate_id("test").is_ok());
+        assert!(Podcast::validate_id("te-st").is_ok());
+        assert!(Podcast::validate_id("123").is_ok());
+        assert!(Podcast::validate_id("test-123").is_ok());
+        assert!(Podcast::validate_id("test_123").is_err());
+        assert!(Podcast::validate_id("").is_err());
+    }
 
     #[test]
     fn to_rss() {

@@ -31,12 +31,12 @@ impl DownloadCommand {
         }
     }
 
-    pub async fn execute(&self, podcast_id: &str, year: Option<i32>) -> Result<(), DownloadError> {
+    pub async fn execute(&self, options: DownloadOptions) -> Result<(), DownloadError> {
         let podcast = self
             .podcasts
-            .get(podcast_id)
+            .get(&options.podcast_id)
             .map_err(DownloadError::GetPodcast)?;
-        let results = self.process_episodes(podcast.clone(), year).await;
+        let results = self.process_episodes(podcast.clone(), options.year).await;
         let mut episodes = Vec::new();
         let mut errors = Vec::new();
         for result in results {
@@ -369,9 +369,13 @@ mod tests {
             .await
             .expect("ServiceProvider should not fail");
         let command = DownloadCommand::new(services.paths, services.http, services.podcasts);
+        let options = DownloadOptions {
+            podcast_id: "irl".to_owned(),
+            year: Some(2019),
+        };
 
         // Act
-        let result = command.execute("irl", Some(2019)).await;
+        let result = command.execute(options).await;
 
         // Assert
         result.assert_ok();

@@ -12,15 +12,16 @@ impl ScrapeCommand {
         Self { http, podcasts }
     }
 
-    pub async fn execute(&self, podcast_id: &str, url: &Url) -> Result<Podcast, ScrapeError> {
-        let content_type = self.http.head(url).await.map_err(ScrapeError::Head)?;
+    pub async fn execute(&self, options: ScrapeOptions) -> Result<Podcast, ScrapeError> {
+        let content_type = self
+            .http
+            .head(&options.url)
+            .await
+            .map_err(ScrapeError::Head)?;
         let podcast = match content_type.as_str() {
-            "application/xml" => self
-                .execute_rss(podcast_id, url)
-                .await
-                .map_err(ScrapeError::Rss)?,
+            "application/xml" => self.execute_rss(&options).await.map_err(ScrapeError::Rss)?,
             _ => self
-                .execute_simplecast(podcast_id, url)
+                .execute_simplecast(&options)
                 .await
                 .map_err(ScrapeError::Simplecast)?,
         };
@@ -31,20 +32,19 @@ impl ScrapeCommand {
 
     pub(super) async fn execute_rss(
         &self,
-        podcast_id: &str,
-        url: &Url,
+        options: &ScrapeOptions,
     ) -> Result<Podcast, ScrapeRssError> {
         let path = self
             .http
-            .get(url, Some(XML_EXTENSION))
+            .get(&options.url, Some(XML_EXTENSION))
             .await
             .map_err(ScrapeRssError::Xml)?;
         let file = File::open(&path)
-            .map_err(|e| ScrapeRssError::IO(podcast_id.to_owned(), path.clone(), e))?;
+            .map_err(|e| ScrapeRssError::IO(options.podcast_id.clone(), path.clone(), e))?;
         let reader = BufReader::new(file);
         let channel = Channel::read_from(reader).map_err(ScrapeRssError::Parse)?;
         let mut podcast: Podcast = channel.try_into().map_err(ScrapeRssError::Convert)?;
-        podcast.id = podcast_id.to_owned();
+        podcast.id = options.podcast_id.clone();
         Ok(podcast)
     }
 }
@@ -113,10 +113,13 @@ mod tests {
             .await
             .expect("ServiceProvider should not fail");
         let command = ScrapeCommand::new(services.http, services.podcasts);
-        let url = Url::parse("https://irlpodcast.org").expect("URL should parse");
+        let options = ScrapeOptions {
+            podcast_id: "irl".to_owned(),
+            url: Url::parse("https://irlpodcast.org").expect("URL should parse"),
+        };
 
         // Act
-        let result = command.execute("irl", &url).await;
+        let result = command.execute(options).await;
 
         // Assert
         let podcast = result.assert_ok();
@@ -131,10 +134,13 @@ mod tests {
             .await
             .expect("ServiceProvider should not fail");
         let command = ScrapeCommand::new(services.http, services.podcasts);
-        let url = Url::parse("https://feeds.simplecast.com/lP7owBq8").expect("URL should parse");
+        let options = ScrapeOptions {
+            podcast_id: "irl-rss".to_owned(),
+            url: Url::parse("https://feeds.simplecast.com/lP7owBq8").expect("URL should parse"),
+        };
 
         // Act
-        let result = command.execute("irl-rss", &url).await;
+        let result = command.execute(options).await;
 
         // Assert
         let podcast = result.assert_ok();

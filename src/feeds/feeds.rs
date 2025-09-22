@@ -11,10 +11,10 @@ impl FeedsCommand {
         Self { podcasts, paths }
     }
 
-    pub async fn execute(&self, podcast_id: &str) -> Result<(), FeedsError> {
+    pub async fn execute(&self, options: FeedsOptions) -> Result<(), FeedsError> {
         let podcast = self
             .podcasts
-            .get(podcast_id)
+            .get(&options.podcast_id)
             .map_err(FeedsError::GetPodcast)?;
         let feeds = self.save_feeds(&podcast).await?;
         info!("{} {} rss feeds", "Created".bold(), feeds.len());
@@ -130,9 +130,12 @@ mod tests {
             .await
             .expect("ServiceProvider should not fail");
         let command = FeedsCommand::new(services.podcasts, services.paths);
+        let options = FeedsOptions {
+            podcast_id: "irl".to_owned(),
+        };
 
         // Act
-        let result = command.execute("irl").await;
+        let result = command.execute(options).await;
 
         // Assert
         result.assert_ok();
