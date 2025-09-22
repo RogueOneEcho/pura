@@ -1,6 +1,6 @@
 mod download;
-pub mod prelude;
 mod feeds;
+pub mod prelude;
 mod schema;
 mod scrape;
 mod services;

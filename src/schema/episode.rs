@@ -1,6 +1,5 @@
 use crate::prelude::*;
 use rss::extension::itunes::ITunesItemExtension;
-use rss::{Enclosure, Guid, Item};
 use strum_macros::AsRefStr;
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
@@ -113,12 +112,12 @@ impl Display for Episode {
     }
 }
 
-impl From<&Episode> for Item {
+impl From<&Episode> for RssItem {
     fn from(episode: &Episode) -> Self {
-        Item {
+        RssItem {
             title: Some(episode.title.clone()),
             link: Some(episode.audio_url.to_string()),
-            guid: Some(Guid {
+            guid: Some(RssGuid {
                 value: episode.id.clone(),
                 permalink: false,
             }),
@@ -126,14 +125,14 @@ impl From<&Episode> for Item {
             pub_date: Some(episode.published_at.to_rfc2822()),
             enclosure: Some(episode.into()),
             itunes_ext: Some(episode.into()),
-            ..Item::default()
+            ..RssItem::default()
         }
     }
 }
 
-impl From<&Episode> for Enclosure {
+impl From<&Episode> for RssEnclosure {
     fn from(episode: &Episode) -> Self {
-        Enclosure {
+        RssEnclosure {
             url: episode.audio_url.to_string(),
             length: episode.audio_file_size.to_string(),
             mime_type: episode.audio_content_type.clone(),
@@ -168,9 +167,9 @@ impl From<String> for EpisodeType {
     }
 }
 
-impl TryFrom<Item> for Episode {
+impl TryFrom<RssItem> for Episode {
     type Error = PodcastConvertError;
-    fn try_from(item: Item) -> Result<Self, PodcastConvertError> {
+    fn try_from(item: RssItem) -> Result<Self, PodcastConvertError> {
         let enclosure = item
             .enclosure
             .ok_or(PodcastConvertError::Required("enclosure".to_owned()))?;

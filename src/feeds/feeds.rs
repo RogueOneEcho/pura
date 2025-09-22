@@ -1,10 +1,4 @@
 use crate::prelude::*;
-use chrono::Datelike;
-use lofty::prelude::{Accessor, TagExt};
-use rss::{Channel, Item};
-use std::collections::HashMap;
-use std::mem::take;
-use tokio::io::AsyncWriteExt;
 
 pub struct FeedsCommand {
     podcasts: PodcastProvider,
@@ -51,7 +45,7 @@ impl FeedsCommand {
         season: Option<usize>,
         year: Option<i32>,
     ) -> Result<PathBuf, FeedsError> {
-        let mut channel: Channel = podcast.into();
+        let mut channel: RssChannel = podcast.into();
         for item in &mut channel.items {
             self.replace_enclosure(podcast, item);
         }
@@ -71,7 +65,7 @@ impl FeedsCommand {
         Ok(path)
     }
 
-    fn replace_enclosure(&self, podcast: &Podcast, item: &mut Item) -> Option<()> {
+    fn replace_enclosure(&self, podcast: &Podcast, item: &mut RssItem) -> Option<()> {
         let guid = item.guid.clone()?;
         let episode = podcast
             .episodes

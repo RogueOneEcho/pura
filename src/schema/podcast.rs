@@ -2,7 +2,6 @@ use crate::prelude::*;
 #[cfg(test)]
 use chrono::Utc;
 use rss::extension::itunes::ITunesChannelExtension;
-use rss::Channel;
 use std::error::Error;
 use std::num::ParseIntError;
 use strum_macros::AsRefStr;
@@ -90,7 +89,7 @@ impl Podcast {
     }
 }
 
-impl From<&Podcast> for Channel {
+impl From<&Podcast> for RssChannel {
     fn from(podcast: &Podcast) -> Self {
         Self {
             title: podcast.title.clone(),
@@ -134,9 +133,9 @@ impl From<String> for PodcastType {
     }
 }
 
-impl TryFrom<Channel> for Podcast {
+impl TryFrom<RssChannel> for Podcast {
     type Error = PodcastConvertError;
-    fn try_from(channel: Channel) -> Result<Self, Self::Error> {
+    fn try_from(channel: RssChannel) -> Result<Self, Self::Error> {
         let itunes = channel
             .itunes_ext
             .ok_or(PodcastConvertError::Required("itunes".to_owned()))?;
@@ -192,7 +191,7 @@ mod tests {
         let podcast = &Podcast::example();
 
         // Act
-        let channel: Channel = podcast.into();
+        let channel: RssChannel = podcast.into();
 
         // Assert
         let result = channel.validate();

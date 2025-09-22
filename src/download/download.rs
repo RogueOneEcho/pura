@@ -1,5 +1,4 @@
 use crate::prelude::*;
-use chrono::Datelike;
 use fast_image_resize::images::Image;
 use fast_image_resize::{ImageBufferError, IntoImageView, ResizeAlg, ResizeOptions, Resizer};
 use image::codecs::jpeg::JpegEncoder;
@@ -11,9 +10,6 @@ use lofty::id3::v2::Id3v2Tag;
 use lofty::picture::{MimeType, Picture, PictureType};
 use lofty::prelude::{Accessor, TagExt};
 use lofty::tag::TagType;
-use std::mem::take;
-use tokio::fs::copy;
-use tokio::fs::create_dir_all;
 use tokio::task::{spawn_blocking, JoinError};
 
 const CONCURRENCY: usize = 8;
