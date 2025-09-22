@@ -1,5 +1,5 @@
 pub use crate::download::*;
-pub use crate::feeds::*;
+pub use crate::emulate::*;
 pub(crate) use crate::schema::*;
 pub use crate::scrape::*;
 pub use crate::services::*;

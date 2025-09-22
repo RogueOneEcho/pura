@@ -1,27 +1,27 @@
 use crate::prelude::*;
 
-pub struct FeedsCommand {
+pub struct EmulateCommand {
     podcasts: PodcastProvider,
     paths: PathProvider,
 }
 
-impl FeedsCommand {
+impl EmulateCommand {
     #[must_use]
     pub fn new(podcasts: PodcastProvider, paths: PathProvider) -> Self {
         Self { podcasts, paths }
     }
 
-    pub async fn execute(&self, options: FeedsOptions) -> Result<(), FeedsError> {
+    pub async fn execute(&self, options: EmulateOptions) -> Result<(), EmulateError> {
         let podcast = self
             .podcasts
             .get(&options.podcast_id)
-            .map_err(FeedsError::GetPodcast)?;
+            .map_err(EmulateError::GetPodcast)?;
         let feeds = self.save_feeds(&podcast).await?;
         info!("{} {} rss feeds", "Created".bold(), feeds.len());
         Ok(())
     }
 
-    async fn save_feeds(&self, podcast: &Podcast) -> Result<Vec<PathBuf>, FeedsError> {
+    async fn save_feeds(&self, podcast: &Podcast) -> Result<Vec<PathBuf>, EmulateError> {
         let mut paths = Vec::new();
         paths.push(self.save_feed(podcast, None, None).await?);
         let mut podcast = podcast.clone();
@@ -44,7 +44,7 @@ impl FeedsCommand {
         podcast: &Podcast,
         season: Option<usize>,
         year: Option<i32>,
-    ) -> Result<PathBuf, FeedsError> {
+    ) -> Result<PathBuf, EmulateError> {
         let mut channel: RssChannel = podcast.into();
         for item in &mut channel.items {
             self.replace_enclosure(podcast, item);
@@ -55,13 +55,13 @@ impl FeedsCommand {
             .get_output_path_for_rss(&podcast.id, season, year);
         let mut file = AsyncFile::create(&path)
             .await
-            .map_err(|e| FeedsError::Xml(path.clone(), e))?;
+            .map_err(|e| EmulateError::Xml(path.clone(), e))?;
         file.write_all(xml.as_bytes())
             .await
-            .map_err(|e| FeedsError::Xml(path.clone(), e))?;
+            .map_err(|e| EmulateError::Xml(path.clone(), e))?;
         file.flush()
             .await
-            .map_err(|e| FeedsError::Xml(path.clone(), e))?;
+            .map_err(|e| EmulateError::Xml(path.clone(), e))?;
         Ok(path)
     }
 
@@ -101,16 +101,16 @@ fn group_by_year(episodes: Vec<Episode>) -> HashMap<i32, Vec<Episode>> {
 
 #[allow(clippy::absolute_paths)]
 #[derive(Debug)]
-pub enum FeedsError {
+pub enum EmulateError {
     GetPodcast(DatabaseError),
     Xml(PathBuf, std::io::Error),
 }
 
-impl Display for FeedsError {
+impl Display for EmulateError {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         let reason = match self {
-            FeedsError::GetPodcast(e) => format!("Unable to get podcast\n{e}"),
-            FeedsError::Xml(path, e) => {
+            EmulateError::GetPodcast(e) => format!("Unable to get podcast\n{e}"),
+            EmulateError::Xml(path, e) => {
                 format!("Unable to write RSS\nPath: {}\n{e}", path.display())
             }
         };
@@ -129,8 +129,8 @@ mod tests {
         let services = ServiceProvider::create()
             .await
             .expect("ServiceProvider should not fail");
-        let command = FeedsCommand::new(services.podcasts, services.paths);
-        let options = FeedsOptions {
+        let command = EmulateCommand::new(services.podcasts, services.paths);
+        let options = EmulateOptions {
             podcast_id: "irl".to_owned(),
         };
 

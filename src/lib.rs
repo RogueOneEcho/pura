@@ -1,5 +1,5 @@
 mod download;
-mod feeds;
+mod emulate;
 pub mod prelude;
 mod schema;
 mod scrape;

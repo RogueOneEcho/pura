@@ -27,8 +27,8 @@ async fn main() {
                 exit(1);
             }
         }
-        Command::CreateFeeds(options) => {
-            let command = FeedsCommand::new(services.podcasts, services.paths);
+        Command::Emulate(options) => {
+            let command = EmulateCommand::new(services.podcasts, services.paths);
             if let Err(e) = command.execute(options).await {
                 error!("{e}");
                 exit(1);
@@ -49,6 +49,6 @@ enum Command {
     Scrape(ScrapeOptions),
     /// Download episodes of a scraped podcast.
     Download(DownloadOptions),
-    /// Create RSS feeds for a scraped podcast.
-    CreateFeeds(FeedsOptions),
+    /// Create emulated RSS of a scraped podcast.
+    Emulate(EmulateOptions),
 }
