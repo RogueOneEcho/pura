@@ -53,6 +53,12 @@ impl EmulateCommand {
         let path = self
             .paths
             .get_output_path_for_rss(&podcast.id, season, year);
+        create_parent_dir_if_not_exist(&path).await.map_err(|e| {
+            EmulateError::Xml(
+                path.parent().expect("path should have a parent dir").into(),
+                e,
+            )
+        })?;
         let mut file = AsyncFile::create(&path)
             .await
             .map_err(|e| EmulateError::Xml(path.clone(), e))?;

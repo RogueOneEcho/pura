@@ -131,15 +131,18 @@ impl DownloadCommand {
         source_path: &PathBuf,
     ) -> Result<PathBuf, ProcessError> {
         let destination_path = self.paths.get_output_path_for_audio(podcast_id, episode);
-        let destination_dir = destination_path
-            .parent()
-            .expect("output path should have parent directory");
-        if !destination_dir.exists() {
-            trace!("Creating directory: {}", destination_dir.display());
-            create_dir_all(&destination_dir).await.map_err(|e| {
-                ProcessError::IO(episode.get_file_stem(), destination_dir.into(), e)
+        create_parent_dir_if_not_exist(&destination_path)
+            .await
+            .map_err(|e| {
+                ProcessError::IO(
+                    episode.get_file_stem(),
+                    destination_path
+                        .parent()
+                        .expect("path should have a parent")
+                        .into(),
+                    e,
+                )
             })?;
-        }
         trace!(
             "{} {episode}\nSource: {}\nTarget: {}",
             "Copying".bold(),
@@ -148,7 +151,7 @@ impl DownloadCommand {
         );
         copy(&source_path, &destination_path)
             .await
-            .map_err(|e| ProcessError::IO(episode.get_file_stem(), destination_dir.into(), e))?;
+            .map_err(|e| ProcessError::IO(episode.get_file_stem(), source_path.into(), e))?;
         Ok(destination_path)
     }
 

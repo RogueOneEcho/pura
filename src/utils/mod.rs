@@ -1,5 +1,6 @@
 #[cfg(test)]
 pub(crate) use assertions::*;
+pub(crate) use fs::*;
 pub use logging::*;
 pub(crate) use sanitizer::*;
 #[cfg(test)]
@@ -9,6 +10,7 @@ pub(crate) use url::*;
 pub(crate) use validation::*;
 #[cfg(test)]
 mod assertions;
+mod fs;
 mod logging;
 mod sanitizer;
 #[cfg(test)]

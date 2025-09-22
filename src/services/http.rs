@@ -2,8 +2,7 @@ use crate::prelude::*;
 use reqwest::header::CONTENT_TYPE;
 use reqwest::Response;
 use std::ffi::OsString;
-use tokio::fs::{create_dir_all, read_to_string, remove_file};
-use tokio::io::AsyncWriteExt;
+use tokio::fs::{read_to_string, remove_file};
 use urlencoding::encode;
 
 /// A client for making HTTP requests and caching responses
