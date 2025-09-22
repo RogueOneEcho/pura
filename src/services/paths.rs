@@ -81,8 +81,20 @@ impl PathProvider {
         }
     }
 
-    pub(crate) fn get_output_path_for_rss(&self, podcast_id: &str) -> PathBuf {
-        self.get_output_dir().join(podcast_id).join(RSS_FILE_NAME)
+    pub(crate) fn get_output_path_for_rss(
+        &self,
+        podcast_id: &str,
+        season: Option<usize>,
+        year: Option<i32>,
+    ) -> PathBuf {
+        assert!(!podcast_id.is_empty(), "podcast id should not be empty");
+        let path = self.get_output_dir().join(podcast_id);
+        if season.is_none() && year.is_none() {
+            return path.join(RSS_FILE_NAME);
+        }
+        let season = Episode::format_season(season);
+        let year = year.unwrap_or_default();
+        path.join(season).join(year.to_string()).join(RSS_FILE_NAME)
     }
 
     pub(crate) fn validate(&self) -> Result<(), Vec<ValidationError>> {

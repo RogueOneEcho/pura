@@ -72,8 +72,11 @@ impl Episode {
     }
 
     pub(crate) fn get_formatted_season(&self) -> String {
-        let number = self.season.unwrap_or(0);
-        format!("S{number:02}")
+        Self::format_season(self.season)
+    }
+
+    pub(crate) fn format_season(season: Option<usize>) -> String {
+        format!("S{:02}", season.unwrap_or(0))
     }
 
     fn get_formatted_date(&self) -> String {

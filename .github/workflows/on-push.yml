@@ -143,7 +143,7 @@ jobs:
     - if: matrix.test
       run: >
         cargo test --release --color=always --no-fail-fast --target ${{ matrix.target }}
-        scrape::command::tests::scrape_command
+        scrape::scrape::tests::scrape_command
 
     - if: matrix.test
       run: cargo test --release --color=always --no-fail-fast --target ${{ matrix.target }}

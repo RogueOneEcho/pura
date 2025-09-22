@@ -12,6 +12,7 @@ use lofty::picture::{MimeType, Picture, PictureType};
 use lofty::prelude::{Accessor, TagExt};
 use lofty::tag::TagType;
 use rss::{Channel, Item};
+use std::collections::HashMap;
 use std::mem::take;
 use tokio::fs::copy;
 use tokio::fs::create_dir_all;
@@ -63,12 +64,8 @@ impl DownloadCommand {
                 errors.len()
             );
         }
-        self.save_rss(&podcast).await?;
-        info!(
-            "{} rss feed with {} episodes",
-            "Created".bold(),
-            podcast.episodes.len()
-        );
+        let feeds = self.save_feeds(&podcast).await?;
+        info!("{} {} rss feeds", "Created".bold(), feeds.len());
         Ok(())
     }
 
@@ -199,13 +196,33 @@ impl DownloadCommand {
         Ok(Some(cover))
     }
 
-    async fn save_rss(&self, podcast: &Podcast) -> Result<PathBuf, DownloadError> {
+    async fn save_feeds(&self, podcast: &Podcast) -> Result<Vec<PathBuf>, DownloadError> {
+        let mut paths = Vec::new();
+        paths.push(self.save_feed(podcast, None, None).await?);
+        let mut podcast = podcast.clone();
+        let groups = group_by_season_year(take(&mut podcast.episodes));
+        for ((season, year), episodes) in groups {
+            let mut p = podcast.clone();
+            p.episodes = episodes;
+            paths.push(self.save_feed(&p, season, Some(year)).await?);
+        }
+        Ok(paths)
+    }
+
+    async fn save_feed(
+        &self,
+        podcast: &Podcast,
+        season: Option<usize>,
+        year: Option<i32>,
+    ) -> Result<PathBuf, DownloadError> {
         let mut channel: Channel = podcast.into();
         for item in &mut channel.items {
             self.replace_enclosure(podcast, item);
         }
         let xml = channel.to_string();
-        let path = self.paths.get_output_path_for_rss(&podcast.id);
+        let path = self
+            .paths
+            .get_output_path_for_rss(&podcast.id, season, year);
         let mut file = AsyncFile::create(&path)
             .await
             .map_err(|e| DownloadError::Xml(path.clone(), e))?;
@@ -309,6 +326,17 @@ fn create_tags(podcast: &Podcast, episode: &Episode, cover: Option<Picture>) -> 
         tag.insert_picture(cover);
     }
     tag
+}
+
+fn group_by_season_year(episodes: Vec<Episode>) -> HashMap<(Option<usize>, i32), Vec<Episode>> {
+    let mut grouped = HashMap::new();
+    for episode in episodes {
+        let season = episode.season;
+        let year = episode.published_at.year();
+        let entry = grouped.entry((season, year)).or_insert_with(Vec::new);
+        entry.push(episode);
+    }
+    grouped
 }
 
 #[allow(clippy::absolute_paths)]
