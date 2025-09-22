@@ -93,8 +93,8 @@ impl PathProvider {
             return path.join(RSS_FILE_NAME);
         }
         let season = Episode::format_season(season);
-        let year = year.unwrap_or_default();
-        path.join(season).join(year.to_string()).join(RSS_FILE_NAME)
+        let year = year.map(|s| s.to_string()).unwrap_or_default();
+        path.join(season).join(year).join(RSS_FILE_NAME)
     }
 
     pub(crate) fn validate(&self) -> Result<(), Vec<ValidationError>> {
@@ -128,5 +128,30 @@ mod tests {
 
         // Assert
         result.assert_ok_debug();
+    }
+
+    #[test]
+    fn get_output_path_for_rss() {
+        // Arrange
+        let paths = PathProvider::default();
+
+        // Act
+        // Assert
+        assert_eq!(
+            paths.get_output_path_for_rss("abc", None, None),
+            PathBuf::from("output/abc/feed.xml")
+        );
+        assert_eq!(
+            paths.get_output_path_for_rss("abc", Some(1), None),
+            PathBuf::from("output/abc/S01/feed.xml")
+        );
+        assert_eq!(
+            paths.get_output_path_for_rss("abc", Some(1), Some(1234)),
+            PathBuf::from("output/abc/S01/1234/feed.xml")
+        );
+        assert_eq!(
+            paths.get_output_path_for_rss("abc", None, Some(1234)),
+            PathBuf::from("output/abc/S00/1234/feed.xml")
+        );
     }
 }

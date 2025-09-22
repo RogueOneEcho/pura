@@ -200,11 +200,16 @@ impl DownloadCommand {
         let mut paths = Vec::new();
         paths.push(self.save_feed(podcast, None, None).await?);
         let mut podcast = podcast.clone();
-        let groups = group_by_season_year(take(&mut podcast.episodes));
-        for ((season, year), episodes) in groups {
+        let groups = group_by_season(take(&mut podcast.episodes));
+        for (season, episodes) in groups {
             let mut p = podcast.clone();
             p.episodes = episodes;
-            paths.push(self.save_feed(&p, season, Some(year)).await?);
+            paths.push(self.save_feed(&p, season, None).await?);
+            let year_groups = group_by_year(take(&mut p.episodes));
+            for (year, episodes) in year_groups {
+                p.episodes = episodes;
+                paths.push(self.save_feed(&p, season, Some(year)).await?);
+            }
         }
         Ok(paths)
     }
@@ -328,15 +333,23 @@ fn create_tags(podcast: &Podcast, episode: &Episode, cover: Option<Picture>) -> 
     tag
 }
 
-fn group_by_season_year(episodes: Vec<Episode>) -> HashMap<(Option<usize>, i32), Vec<Episode>> {
-    let mut grouped = HashMap::new();
+fn group_by_season(episodes: Vec<Episode>) -> HashMap<Option<usize>, Vec<Episode>> {
+    let mut groups: HashMap<Option<usize>, Vec<Episode>> = HashMap::new();
     for episode in episodes {
-        let season = episode.season;
-        let year = episode.published_at.year();
-        let entry = grouped.entry((season, year)).or_insert_with(Vec::new);
-        entry.push(episode);
+        let group = groups.entry(episode.season).or_default();
+        group.push(episode);
     }
-    grouped
+    groups
+}
+
+fn group_by_year(episodes: Vec<Episode>) -> HashMap<i32, Vec<Episode>> {
+    let mut groups: HashMap<i32, Vec<Episode>> = HashMap::new();
+    for episode in episodes {
+        let year = episode.published_at.year();
+        let group = groups.entry(year).or_default();
+        group.push(episode);
+    }
+    groups
 }
 
 #[allow(clippy::absolute_paths)]
