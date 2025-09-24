@@ -1,6 +1,8 @@
 use crate::prelude::*;
 use fast_image_resize::images::Image;
-use fast_image_resize::{ImageBufferError, IntoImageView, ResizeAlg, ResizeOptions, Resizer};
+use fast_image_resize::{
+    FilterType, ImageBufferError, IntoImageView, ResizeAlg, ResizeOptions, Resizer,
+};
 use image::codecs::gif::GifEncoder;
 use image::codecs::jpeg::JpegEncoder;
 use image::codecs::png::PngEncoder;
@@ -9,7 +11,7 @@ use image::{DynamicImage, ExtendedColorType, ImageEncoder, ImageFormat, ImageRea
 use lofty::picture::{MimeType, Picture, PictureType};
 use std::fs::write;
 
-const RESIZE_ALGORITHM: ResizeAlg = ResizeAlg::Nearest;
+const RESIZE_ALGORITHM: ResizeAlg = ResizeAlg::Interpolation(FilterType::CatmullRom);
 
 pub struct Resize {
     format: ImageFormat,
