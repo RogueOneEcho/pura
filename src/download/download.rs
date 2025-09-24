@@ -1,9 +1,5 @@
 use crate::prelude::*;
-use fast_image_resize::images::Image;
-use fast_image_resize::{ImageBufferError, IntoImageView, ResizeAlg, ResizeOptions, Resizer};
-use image::codecs::jpeg::JpegEncoder;
-use image::codecs::png::PngEncoder;
-use image::{ImageEncoder, ImageReader};
+use fast_image_resize::ImageBufferError;
 use lofty::config::WriteOptions;
 use lofty::error::LoftyError;
 use lofty::id3::v2::Id3v2Tag;
@@ -179,54 +175,17 @@ impl DownloadCommand {
             .map_err(|e| ProcessError::DownloadImage(episode.get_file_stem(), e))?;
         trace!("{} image for episode: {episode}", "Resizing".bold());
         let m = mime_type.clone();
-        let img_bytes =
-            spawn_blocking(move || -> Result<Vec<u8>, ResizeError> { resize_image(&path, &m) })
-                .await
-                .map_err(|e| ProcessError::Task(episode.get_file_stem(), e))?
-                .map_err(|e| ProcessError::ResizeImage(episode.get_file_stem(), e))?;
+        let img_bytes = spawn_blocking(move || -> Result<Vec<u8>, ResizeError> {
+            resize_image(&path, &m, IMAGE_SIZE, IMAGE_SIZE)
+        })
+        .await
+        .map_err(|e| ProcessError::Task(episode.get_file_stem(), e))?
+        .map_err(|e| ProcessError::ResizeImage(episode.get_file_stem(), e))?;
         trace!("{} image for episode: {episode}", "Resized".bold());
         let cover =
             Picture::new_unchecked(PictureType::CoverFront, Some(mime_type), None, img_bytes);
         Ok(Some(cover))
     }
-}
-
-fn resize_image(path: &PathBuf, mime_type: &MimeType) -> Result<Vec<u8>, ResizeError> {
-    let src = ImageReader::open(path)
-        .map_err(ResizeError::IO)?
-        .decode()
-        .map_err(ResizeError::Image)?;
-    let mut target = Image::new(
-        IMAGE_SIZE,
-        IMAGE_SIZE,
-        src.pixel_type()
-            .expect("source image should have a pixel type"),
-    );
-    let mut resizer = Resizer::new();
-    let options = ResizeOptions::default().resize_alg(ResizeAlg::Nearest);
-    resizer
-        .resize(&src, &mut target, &options)
-        .map_err(ResizeError::Resize)?;
-    let mut buffer = Vec::new();
-    let result = match mime_type {
-        MimeType::Png => PngEncoder::new(&mut buffer).write_image(
-            target.buffer(),
-            IMAGE_SIZE,
-            IMAGE_SIZE,
-            src.color().into(),
-        ),
-        MimeType::Jpeg => JpegEncoder::new(&mut buffer).write_image(
-            target.buffer(),
-            IMAGE_SIZE,
-            IMAGE_SIZE,
-            src.color().into(),
-        ),
-        _ => {
-            return Err(ResizeError::Mime(mime_type.clone()));
-        }
-    };
-    result.map_err(ResizeError::Image)?;
-    Ok(buffer)
 }
 
 fn set_episode_tags(
