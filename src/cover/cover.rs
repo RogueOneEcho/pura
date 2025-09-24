@@ -33,12 +33,11 @@ impl CoverCommand {
             .map_err(CoverError::GetImage)?;
         let banner = self.paths.get_output_path_for_banner(&options.podcast_id);
         let cover = self.paths.get_output_path_for_cover(&options.podcast_id);
-        let banner = Resize::new(&src)
-            .map_err(CoverError::Image)?
+        let resize = Resize::new(&src).map_err(CoverError::Image)?;
+        let banner = resize
             .to_file(&banner, BANNER_WIDTH, BANNER_HEIGHT)
             .map_err(CoverError::Image)?;
-        let cover = Resize::new(&src)
-            .map_err(CoverError::Image)?
+        let cover = resize
             .to_file(&cover, COVER_SIZE, COVER_SIZE)
             .map_err(CoverError::Image)?;
         info!("{} cover and banner images", "Created".bold());
