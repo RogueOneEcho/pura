@@ -34,6 +34,13 @@ async fn main() {
                 exit(1);
             }
         }
+        Command::Cover(options) => {
+            let command = CoverCommand::new(services.podcasts, services.http, services.paths);
+            if let Err(e) = command.execute(options).await {
+                error!("{e}");
+                exit(1);
+            }
+        }
     }
 }
 
@@ -51,4 +58,6 @@ enum Command {
     Download(DownloadOptions),
     /// Create emulated RSS of a scraped podcast.
     Emulate(EmulateOptions),
+    /// Download cover and banner images of a scraped podcast.
+    Cover(CoverOptions),
 }

@@ -1,3 +1,4 @@
+mod cover;
 mod download;
 mod emulate;
 pub mod prelude;

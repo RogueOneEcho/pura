@@ -1,3 +1,4 @@
+pub use crate::cover::*;
 pub use crate::download::*;
 pub use crate::emulate::*;
 pub(crate) use crate::schema::*;

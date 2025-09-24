@@ -8,9 +8,6 @@ const PODCASTS_DIR: &str = "podcasts";
 pub(crate) const HEAD_EXTENSION: &str = "head";
 pub(crate) const HTML_EXTENSION: &str = "html";
 pub(crate) const JSON_EXTENSION: &str = "json";
-pub(crate) const JPG_EXTENSION: &str = "jpg";
-pub(crate) const JPEG_EXTENSION: &str = "jpeg";
-pub(crate) const PNG_EXTENSION: &str = "png";
 pub(crate) const MP3_EXTENSION: &str = "mp3";
 pub(crate) const XML_EXTENSION: &str = "xml";
 const RSS_FILE_NAME: &str = "feed.xml";
@@ -95,6 +92,14 @@ impl PathProvider {
         let season = Episode::format_season(season);
         let year = year.map(|s| s.to_string()).unwrap_or_default();
         path.join(season).join(year).join(RSS_FILE_NAME)
+    }
+
+    pub(crate) fn get_output_path_for_cover(&self, podcast_id: &str) -> PathBuf {
+        self.get_output_dir().join(podcast_id).join("cover.jpg")
+    }
+
+    pub(crate) fn get_output_path_for_banner(&self, podcast_id: &str) -> PathBuf {
+        self.get_output_dir().join(podcast_id).join("banner.jpg")
     }
 
     pub(crate) fn validate(&self) -> Result<(), Vec<ValidationError>> {

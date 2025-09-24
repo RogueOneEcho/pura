@@ -1,6 +1,5 @@
 use crate::prelude::*;
-use lofty::error::LoftyError;
-use lofty::picture::{MimeType, Picture, PictureType};
+use lofty::picture::Picture;
 use tokio::task::{spawn_blocking, JoinError};
 
 const CONCURRENCY: usize = 8;
@@ -153,33 +152,20 @@ impl DownloadCommand {
         };
         trace!("{} image for episode: {episode}", "Downloading".bold());
         let extension = url.get_extension();
-        let mime_type = match extension.clone().map(|e| e.to_lowercase()).as_deref() {
-            Some(JPG_EXTENSION | JPEG_EXTENSION) => MimeType::Jpeg,
-            Some(PNG_EXTENSION) => MimeType::Png,
-            _ => {
-                warn!(
-                    "Unable to determine mimetype of image for episode: {episode} \nURL: {:?}",
-                    episode.image_url
-                );
-                MimeType::Jpeg
-            }
-        };
         let path = self
             .http
             .get(url, extension.as_deref())
             .await
             .map_err(|e| ProcessError::DownloadImage(episode.get_file_stem(), e))?;
         trace!("{} image for episode: {episode}", "Resizing".bold());
-        let img_bytes = spawn_blocking(move || -> Result<Vec<u8>, ImageError> {
-            Resize::execute(&path, IMAGE_SIZE, IMAGE_SIZE)
+        let picture = spawn_blocking(move || -> Result<Picture, ImageError> {
+            Resize::new(&path)?.to_picture(IMAGE_SIZE, IMAGE_SIZE)
         })
         .await
         .map_err(|e| ProcessError::Task(episode.get_file_stem(), e))?
         .map_err(|e| ProcessError::ResizeImage(episode.get_file_stem(), e))?;
         trace!("{} image for episode: {episode}", "Resized".bold());
-        let cover =
-            Picture::new_unchecked(PictureType::CoverFront, Some(mime_type), None, img_bytes);
-        Ok(Some(cover))
+        Ok(Some(picture))
     }
 }
 
@@ -203,7 +189,7 @@ impl Display for DownloadError {
 pub enum ProcessError {
     DownloadAudio(String, HttpError),
     IO(String, PathBuf, std::io::Error),
-    Tag(String, PathBuf, LoftyError),
+    Tag(String, PathBuf, lofty::error::LoftyError),
     DownloadImage(String, HttpError),
     Task(String, JoinError),
     ResizeImage(String, ImageError),

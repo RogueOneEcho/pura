@@ -5,59 +5,107 @@ use image::codecs::gif::GifEncoder;
 use image::codecs::jpeg::JpegEncoder;
 use image::codecs::png::PngEncoder;
 use image::codecs::webp::WebPEncoder;
-use image::{ImageEncoder, ImageFormat, ImageReader};
+use image::{DynamicImage, ExtendedColorType, ImageEncoder, ImageFormat, ImageReader};
+use lofty::picture::{MimeType, Picture, PictureType};
+use std::fs::write;
 
 const RESIZE_ALGORITHM: ResizeAlg = ResizeAlg::Nearest;
 
-pub struct Resize;
+pub struct Resize {
+    format: ImageFormat,
+    image: DynamicImage,
+    color_type: ExtendedColorType,
+}
 
 impl Resize {
-    pub(crate) fn execute(path: &PathBuf, width: u32, height: u32) -> Result<Vec<u8>, ImageError> {
+    pub(crate) fn new(path: &PathBuf) -> Result<Resize, ImageError> {
         let reader = ImageReader::open(path)
             .map_err(ImageError::IO)?
             .with_guessed_format()
             .map_err(ImageError::IO)?;
         let format = reader.format().ok_or(ImageError::UnknownFormat)?;
-        let src = reader.decode().map_err(ImageError::Image)?;
+        let image = reader.decode().map_err(ImageError::Image)?;
+        let color_type = image.color().into();
+        Ok(Self {
+            format,
+            image,
+            color_type,
+        })
+    }
+
+    pub(crate) fn to_file(
+        &self,
+        path: &Path,
+        width: u32,
+        height: u32,
+    ) -> Result<PathBuf, ImageError> {
+        let bytes = self.to_bytes(width, height)?;
+        let extension = self
+            .format
+            .extensions_str()
+            .first()
+            .expect("should be at least one image extension");
+        let path = path.with_extension(extension);
+        write(&path, bytes).map_err(ImageError::IO)?;
+        Ok(path)
+    }
+
+    pub(crate) fn to_picture(&self, width: u32, height: u32) -> Result<Picture, ImageError> {
+        let mime = match self.format {
+            ImageFormat::Png => MimeType::Png,
+            ImageFormat::Jpeg => MimeType::Jpeg,
+            ImageFormat::Gif => MimeType::Gif,
+            format => MimeType::from_str(format.to_mime_type()),
+        };
+        let bytes = self.to_bytes(width, height)?;
+        Ok(Picture::new_unchecked(
+            PictureType::CoverFront,
+            Some(mime),
+            None,
+            bytes,
+        ))
+    }
+
+    fn to_bytes(&self, width: u32, height: u32) -> Result<Vec<u8>, ImageError> {
         let mut target = Image::new(
             width,
             height,
-            src.pixel_type()
+            self.image
+                .pixel_type()
                 .expect("source image should have a pixel type"),
         );
         let mut resizer = Resizer::new();
-        let options = ResizeOptions::default().resize_alg(RESIZE_ALGORITHM);
+        let options = ResizeOptions::default()
+            .resize_alg(RESIZE_ALGORITHM)
+            .fit_into_destination(None);
         resizer
-            .resize(&src, &mut target, &options)
+            .resize(&self.image, &mut target, &options)
             .map_err(ImageError::Resize)?;
         let mut buffer = Vec::new();
-        resizer
-            .resize(&src, &mut target, &options)
-            .map_err(ImageError::Resize)?;
-        let result = match format {
+        let result = match self.format {
             ImageFormat::Png => PngEncoder::new(&mut buffer).write_image(
                 target.buffer(),
                 width,
                 height,
-                src.color().into(),
+                self.color_type,
             ),
             ImageFormat::Jpeg => JpegEncoder::new(&mut buffer).write_image(
                 target.buffer(),
                 width,
                 height,
-                src.color().into(),
+                self.color_type,
             ),
             ImageFormat::Gif => GifEncoder::new(&mut buffer).write_image(
                 target.buffer(),
                 width,
                 height,
-                src.color().into(),
+                self.color_type,
             ),
             ImageFormat::WebP => WebPEncoder::new_lossless(&mut buffer).write_image(
                 target.buffer(),
                 width,
                 height,
-                src.color().into(),
+                self.color_type,
             ),
             format => return Err(ImageError::UnsupportedFormat(format)),
         };
@@ -122,7 +170,7 @@ mod tests {
                 .expect("get image should not fail");
 
             // Act
-            let result = Resize::execute(&path, 100, 100);
+            let result = Resize::new(&path).assert_ok().to_bytes(100, 100);
 
             // Assert
             let bytes = result.assert_ok();
