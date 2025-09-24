@@ -1,5 +1,4 @@
 use crate::prelude::*;
-use fast_image_resize::ImageBufferError;
 use lofty::config::WriteOptions;
 use lofty::error::LoftyError;
 use lofty::id3::v2::Id3v2Tag;
@@ -174,9 +173,8 @@ impl DownloadCommand {
             .await
             .map_err(|e| ProcessError::DownloadImage(episode.get_file_stem(), e))?;
         trace!("{} image for episode: {episode}", "Resizing".bold());
-        let m = mime_type.clone();
-        let img_bytes = spawn_blocking(move || -> Result<Vec<u8>, ResizeError> {
-            resize_image(&path, &m, IMAGE_SIZE, IMAGE_SIZE)
+        let img_bytes = spawn_blocking(move || -> Result<Vec<u8>, ImageError> {
+            Resize::execute(&path, IMAGE_SIZE, IMAGE_SIZE)
         })
         .await
         .map_err(|e| ProcessError::Task(episode.get_file_stem(), e))?
@@ -251,7 +249,7 @@ pub enum ProcessError {
     Tag(String, PathBuf, LoftyError),
     DownloadImage(String, HttpError),
     Task(String, JoinError),
-    ResizeImage(String, ResizeError),
+    ResizeImage(String, ImageError),
 }
 
 impl Display for ProcessError {
@@ -280,39 +278,6 @@ impl Display for ProcessError {
             }
             ProcessError::ResizeImage(id, e) => {
                 format!("Unable to resize image for episode: {id}\n{e}")
-            }
-        };
-        write!(f, "{message}")
-    }
-}
-
-#[derive(Debug)]
-#[allow(clippy::absolute_paths)]
-pub enum ResizeError {
-    IO(std::io::Error),
-    Image(image::error::ImageError),
-    ImageBuffer(ImageBufferError),
-    Resize(fast_image_resize::ResizeError),
-    Mime(MimeType),
-}
-
-impl Display for ResizeError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-        let message = match self {
-            ResizeError::IO(e) => {
-                format!("An I/O error occurred: {e}")
-            }
-            ResizeError::Image(e) => {
-                format!("An image error occurred: {e}")
-            }
-            ResizeError::ImageBuffer(e) => {
-                format!("An image buffer error occurred: {e}")
-            }
-            ResizeError::Resize(e) => {
-                format!("A resize error occurred: {e}")
-            }
-            ResizeError::Mime(mime_type) => {
-                format!("Unable to encode image type: {mime_type}")
             }
         };
         write!(f, "{message}")
