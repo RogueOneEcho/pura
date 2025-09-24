@@ -1,10 +1,6 @@
 use crate::prelude::*;
-use lofty::config::WriteOptions;
 use lofty::error::LoftyError;
-use lofty::id3::v2::Id3v2Tag;
 use lofty::picture::{MimeType, Picture, PictureType};
-use lofty::prelude::{Accessor, TagExt};
-use lofty::tag::TagType;
 use tokio::task::{spawn_blocking, JoinError};
 
 const CONCURRENCY: usize = 8;
@@ -107,7 +103,8 @@ impl DownloadCommand {
         let path = self.download_episode(&episode).await?;
         let audio_path = self.copy_episode(&podcast.id, &episode, &path).await?;
         let cover = self.download_image(&episode).await?;
-        set_episode_tags(podcast, &episode, &audio_path, cover)
+        trace!("{} tags for {episode}", "Setting".bold());
+        Tag::execute(podcast, &episode, cover, &audio_path)
             .map_err(|e| ProcessError::Tag(episode.get_file_stem(), audio_path.clone(), e))?;
         Ok(episode)
     }
@@ -184,46 +181,6 @@ impl DownloadCommand {
             Picture::new_unchecked(PictureType::CoverFront, Some(mime_type), None, img_bytes);
         Ok(Some(cover))
     }
-}
-
-fn set_episode_tags(
-    podcast: &Podcast,
-    episode: &Episode,
-    path: &PathBuf,
-    cover: Option<Picture>,
-) -> Result<(), LoftyError> {
-    TagType::Ape.remove_from_path(path)?;
-    TagType::Id3v1.remove_from_path(path)?;
-    TagType::Id3v2.remove_from_path(path)?;
-    let tag = create_tags(podcast, episode, cover);
-    trace!("{} tags for {episode}", "Setting".bold());
-    tag.save_to_path(path, WriteOptions::default())?;
-    Ok(())
-}
-
-#[allow(
-    clippy::as_conversions,
-    clippy::cast_possible_truncation,
-    clippy::cast_sign_loss
-)]
-fn create_tags(podcast: &Podcast, episode: &Episode, cover: Option<Picture>) -> Id3v2Tag {
-    let mut tag = Id3v2Tag::default();
-    tag.set_title(episode.title.trim().to_owned());
-    tag.set_artist(podcast.title.clone());
-    if let Some(season) = episode.season {
-        tag.set_album(format!("Season {season}"));
-    }
-    tag.set_disk(episode.season.unwrap_or_default() as u32);
-    let year = episode.published_at.year() as u32;
-    tag.set_year(year);
-    if let Some(number) = episode.number {
-        tag.set_track(number as u32);
-    }
-    tag.set_comment(episode.description.clone());
-    if let Some(cover) = cover {
-        tag.insert_picture(cover);
-    }
-    tag
 }
 
 #[allow(clippy::absolute_paths)]

@@ -113,7 +113,7 @@ mod tests {
         let http = HttpClient::default();
         let formats = vec!["jpeg", "png", "webp"];
         for format in formats {
-            eprintln!("format: {}", format);
+            eprintln!("format: {format}");
             let url = Url::parse(&format!("https://httpbin.org/image/{format}"))
                 .expect("url should be valid");
             let path = http

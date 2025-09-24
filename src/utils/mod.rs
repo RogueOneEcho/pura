@@ -4,6 +4,7 @@ pub(crate) use fs::*;
 pub use logging::*;
 pub(crate) use resize::*;
 pub(crate) use sanitizer::*;
+pub(crate) use tag::*;
 #[cfg(test)]
 #[allow(unused_imports)]
 pub(crate) use temp::*;
@@ -15,6 +16,7 @@ mod fs;
 mod logging;
 mod resize;
 mod sanitizer;
+mod tag;
 #[cfg(test)]
 mod temp;
 mod url;
