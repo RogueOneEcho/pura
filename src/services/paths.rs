@@ -9,8 +9,8 @@ pub(crate) const HEAD_EXTENSION: &str = "head";
 pub(crate) const HTML_EXTENSION: &str = "html";
 pub(crate) const JSON_EXTENSION: &str = "json";
 pub(crate) const MP3_EXTENSION: &str = "mp3";
-pub(crate) const XML_EXTENSION: &str = "xml";
-const RSS_FILE_NAME: &str = "feed.xml";
+pub(crate) const RSS_EXTENSION: &str = "rss";
+const RSS_FILE_NAME: &str = "feed.rss";
 
 #[derive(Default)]
 pub struct PathProvider {

@@ -36,7 +36,7 @@ impl ScrapeCommand {
     ) -> Result<Podcast, ScrapeRssError> {
         let path = self
             .http
-            .get(&options.url, Some(XML_EXTENSION))
+            .get(&options.url, Some(RSS_EXTENSION))
             .await
             .map_err(ScrapeRssError::Xml)?;
         let file = File::open(&path)
