@@ -15,6 +15,7 @@ services:
   pura:
     container_name: pura
     build: .
+    user: ${UID}:${GID}
     volumes:
     - /srv/shared/pura:/srv/shared/pura
     environment:
@@ -31,11 +32,12 @@ services:
   caddy:
     container_name: pura-caddy
     image: caddy:2-alpine
+    user: ${UID}:${GID}
     ports:
     - "4000:80"
     volumes:
     - /srv/pura/caddy/data:/data
     - /srv/pura/caddy/config:/config
-    - /srv/shared/pura/output:/srv
+    - /srv/shared/pura/output:/srv:ro
     restart: unless-stopped
     command: caddy file-server --browse --root /srv
