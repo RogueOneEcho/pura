@@ -1,5 +1,6 @@
 use crate::prelude::*;
 use rss::extension::itunes::ITunesItemExtension;
+use std::fmt::Write as _;
 use strum_macros::AsRefStr;
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
@@ -56,18 +57,23 @@ pub enum EpisodeType {
 
 impl Episode {
     pub(crate) fn get_file_stem(&self) -> String {
-        let date = self.get_formatted_date();
-        let number = self.get_padded_number();
-        let title = self.get_sanitized_title();
-        format!("{date} {number} {title}")
-    }
-
-    fn get_padded_number(&self) -> String {
+        let mut output = self.get_formatted_date();
         if let Some(number) = self.number {
-            format!("{number:04}")
-        } else {
-            "____".to_owned()
+            let _ = write!(output, " {number:03}");
         }
+        if self.episode_type != EpisodeType::Full {
+            output.push(' ');
+            output.push_str(&self.episode_type.as_ref().to_uppercase());
+        }
+        if self.number.is_none() && self.episode_type == EpisodeType::Full {
+            warn!(
+                "Episode has no number and is not a trailer or bonus: {}",
+                self.title
+            );
+        }
+        output.push(' ');
+        output.push_str(&self.get_sanitized_title());
+        output
     }
 
     pub(crate) fn get_formatted_season(&self) -> String {
@@ -217,19 +223,43 @@ mod tests {
     #[test]
     fn get_file_stem() {
         // Arrange
-        let example = Episode::example();
+        let episode = Episode::example();
         let mut numberless = Episode::example();
         numberless.number = None;
         let mut bonus = numberless.clone();
         bonus.episode_type = EpisodeType::Bonus;
         let mut trailer = numberless.clone();
         trailer.episode_type = EpisodeType::Trailer;
+        let mut episode_bonus = episode.clone();
+        episode_bonus.episode_type = EpisodeType::Bonus;
+        let mut thousands = episode.clone();
+        thousands.number = Some(9876);
 
         // Act
         // Assert
-        assert_eq!(example.get_file_stem(), "1970-01-01 0003 Lorem ipsum dolor sit amet");
-        assert_eq!(numberless.get_file_stem(), "1970-01-01 ____ Lorem ipsum dolor sit amet");
-        assert_eq!(bonus.get_file_stem(), "1970-01-01 ____ Lorem ipsum dolor sit amet");
-        assert_eq!(trailer.get_file_stem(), "1970-01-01 ____ Lorem ipsum dolor sit amet");
+        assert_eq!(
+            episode.get_file_stem(),
+            "1970-01-01 003 Lorem ipsum dolor sit amet"
+        );
+        assert_eq!(
+            numberless.get_file_stem(),
+            "1970-01-01 Lorem ipsum dolor sit amet"
+        );
+        assert_eq!(
+            bonus.get_file_stem(),
+            "1970-01-01 BONUS Lorem ipsum dolor sit amet"
+        );
+        assert_eq!(
+            trailer.get_file_stem(),
+            "1970-01-01 TRAILER Lorem ipsum dolor sit amet"
+        );
+        assert_eq!(
+            episode_bonus.get_file_stem(),
+            "1970-01-01 003 BONUS Lorem ipsum dolor sit amet"
+        );
+        assert_eq!(
+            thousands.get_file_stem(),
+            "1970-01-01 9876 Lorem ipsum dolor sit amet"
+        );
     }
 }
