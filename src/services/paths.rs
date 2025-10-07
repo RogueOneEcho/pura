@@ -144,19 +144,19 @@ mod tests {
         // Assert
         assert_eq!(
             paths.get_output_path_for_rss("abc", None, None),
-            PathBuf::from("output/abc/feed.xml")
+            PathBuf::from("output/abc/feed.rss")
         );
         assert_eq!(
             paths.get_output_path_for_rss("abc", Some(1), None),
-            PathBuf::from("output/abc/S01/feed.xml")
+            PathBuf::from("output/abc/S01/feed.rss")
         );
         assert_eq!(
             paths.get_output_path_for_rss("abc", Some(1), Some(1234)),
-            PathBuf::from("output/abc/S01/1234/feed.xml")
+            PathBuf::from("output/abc/S01/1234/feed.rss")
         );
         assert_eq!(
             paths.get_output_path_for_rss("abc", None, Some(1234)),
-            PathBuf::from("output/abc/S00/1234/feed.xml")
+            PathBuf::from("output/abc/S00/1234/feed.rss")
         );
     }
 }
