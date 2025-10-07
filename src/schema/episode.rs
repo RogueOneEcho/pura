@@ -217,12 +217,19 @@ mod tests {
     #[test]
     fn get_file_stem() {
         // Arrange
-        let episode = Episode::example();
+        let example = Episode::example();
+        let mut numberless = Episode::example();
+        numberless.number = None;
+        let mut bonus = numberless.clone();
+        bonus.episode_type = EpisodeType::Bonus;
+        let mut trailer = numberless.clone();
+        trailer.episode_type = EpisodeType::Trailer;
 
         // Act
-        let result = episode.get_file_stem();
-
         // Assert
-        assert_eq!(result, "1970-01-01 0003 Lorem ipsum dolor sit amet");
+        assert_eq!(example.get_file_stem(), "1970-01-01 0003 Lorem ipsum dolor sit amet");
+        assert_eq!(numberless.get_file_stem(), "1970-01-01 ____ Lorem ipsum dolor sit amet");
+        assert_eq!(bonus.get_file_stem(), "1970-01-01 ____ Lorem ipsum dolor sit amet");
+        assert_eq!(trailer.get_file_stem(), "1970-01-01 ____ Lorem ipsum dolor sit amet");
     }
 }
