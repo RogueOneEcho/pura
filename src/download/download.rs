@@ -50,6 +50,7 @@ impl DownloadCommand {
         Ok(())
     }
 
+    #[allow(clippy::as_conversions)]
     async fn process_episodes(
         &self,
         mut podcast: Podcast,
@@ -78,11 +79,14 @@ impl DownloadCommand {
             "Downloading".bold(),
             episodes.len()
         );
-        stream::iter(episodes.into_iter().map(|episode| {
+        let progress = Progress::new(episodes.len() as u64);
+        let results = stream::iter(episodes.into_iter().map(|episode| {
             let this = self;
             let podcast = podcast.clone();
+            let progress = progress.clone();
             async move {
                 let result = this.process_episode(&podcast, episode).await;
+                progress.update();
                 if let Err(e) = &result {
                     warn!("{e}");
                 }
@@ -91,7 +95,9 @@ impl DownloadCommand {
         }))
         .buffer_unordered(CONCURRENCY)
         .collect::<Vec<_>>()
-        .await
+        .await;
+        progress.finish();
+        results
     }
 
     async fn process_episode(

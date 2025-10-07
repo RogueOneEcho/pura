@@ -2,6 +2,7 @@
 pub(crate) use assertions::*;
 pub(crate) use fs::*;
 pub use logging::*;
+pub(crate) use progress::*;
 pub(crate) use resize::*;
 pub(crate) use sanitizer::*;
 pub(crate) use tag::*;
@@ -14,6 +15,7 @@ pub(crate) use validation::*;
 mod assertions;
 mod fs;
 mod logging;
+mod progress;
 mod resize;
 mod sanitizer;
 mod tag;

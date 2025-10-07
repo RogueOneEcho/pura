@@ -108,17 +108,21 @@ impl ScrapeCommand {
             "Fetching".bold(),
             playlist.len()
         );
-        stream::iter(playlist.iter().map(|episode| {
+        let progress = Progress::new(playlist.len() as u64);
+        let result = stream::iter(playlist.iter().map(|episode| {
             let this = self;
+            let progress = progress.clone();
             async move {
-                match this.get_episode(&episode.id).await {
+                let result = match this.get_episode(&episode.id).await {
                     Ok(ep) => Some(ep),
                     Err(e) => {
                         warn!("{} to get episode {}", "Failed".bold(), episode.id);
                         debug!("{e}");
                         None
                     }
-                }
+                };
+                progress.update();
+                result
             }
         }))
         .buffer_unordered(CONCURRENCY)
@@ -126,7 +130,9 @@ impl ScrapeCommand {
         .await
         .into_iter()
         .flatten()
-        .collect()
+        .collect();
+        progress.finish();
+        result
     }
 }
 
